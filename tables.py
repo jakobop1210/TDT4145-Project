@@ -14,9 +14,8 @@ cursor.execute('''
         CONSTRAINT slutt_fk FOREIGN KEY (SluttStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE
     );
 ''')
-#Kan fremmednøkkel være Null her?
-#Hvor lang bør en VARCHAR være? 30?
-
+# ? Kan fremmednøkkel være Null her?
+# ? Hvor lang bør en VARCHAR være? 30?
 
 # CREATE TABLE HarVogn(
 # 	VognOppsettID INTEGER NOT NULL,

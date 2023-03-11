@@ -1,9 +1,12 @@
+
+
+
 CREATE TABLE InneholderStrekning(
   BaneStrekningsNavn TEXT NOT NULL,
   DelstrekningsID TEXT NOT NULL,
   CONSTRAINT is_pk PRIMARY KEY (BaneStrekningsNavn, DelstrekningsID),
-  CONSTRAINT BaneStrekningsNavn FOREIGN KEY BaneStrekningsNavn REFERENCES BaneStrekning ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT DelstrekningsID FOREIGN KEY DelstrekningsID REFERENCES DelStrekning ON UPDATE CASCADE ON DELETE CASCADE
+  CONSTRAINT BaneStrekningsNavn_fk FOREIGN KEY BaneStrekningsNavn REFERENCES BaneStrekning ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT DelstrekningsID_fk FOREIGN KEY DelstrekningsID REFERENCES DelStrekning ON UPDATE CASCADE ON DELETE CASCADE
 )
 
 CREATE TABLE Delstrekning(
@@ -13,8 +16,8 @@ CREATE TABLE Delstrekning(
   StartStasjon text, 
   SluttStasjon text,
   CONSTRAINT ds_pk PRIMARY KEY DelstrekningsID,
-  CONSTRAINT StartS FOREIGN KEY StartStasjon REFERENCES JernbaneStasjon ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT SluttS FOREIGN KEY SluttStasjon REFERENCES JernbaneStasjon ON UPDATE CASCADE ON DELETE CASCADE
+  CONSTRAINT StartS_fk FOREIGN KEY StartStasjon REFERENCES JernbaneStasjon ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT SluttS_fk FOREIGN KEY SluttStasjon REFERENCES JernbaneStasjon ON UPDATE CASCADE ON DELETE CASCADE
 )
 
 CREATE TABLE JernbaneStasjon(
@@ -37,7 +40,7 @@ CREATE TABLE StasjonerIRute(
 
 CREATE TABLE Operatør(
   Navn text not NULL,
-  CONSTRAINT ONavn PRIMARY KEY Navn,
+  CONSTRAINT ONavn_pk PRIMARY KEY Navn,
 )
 
 CREATE TABLE Togrute(
@@ -47,8 +50,8 @@ CREATE TABLE Togrute(
   VognOppsettID,
   Ukedager text, --? Hvordan får vi frem at dette er en flerverdi nøkkel?
   CONSTRAINT tr_pk PRIMARY KEY TogruteID,
-  CONSTRAINT OperatørNavn FOREIGN key OperatørNavn REFERENCES Operatør on UPDATE CASCADE on UPDATE DELETE,
-  CONSTRAINT VognOppsettID FOREIGN key VognOppsettID REFERENCES VognOppsett on UPDATE CASCADE on UPDATE DELETE,
+  CONSTRAINT OperatørNavn_fk FOREIGN key OperatørNavn REFERENCES Operatør on UPDATE CASCADE on UPDATE DELETE,
+  CONSTRAINT VognOppsettID_fk FOREIGN key VognOppsettID REFERENCES VognOppsett on UPDATE CASCADE on UPDATE DELETE,
   )
 
 -- CREATE TABLE Ukedager(
@@ -61,7 +64,7 @@ CREATE TABLE Togrute(
 CREATE TABLE TogruteForekomst(
   Dato text , 
   TogruteID text,
-  CONSTRAINT togruteID FOREIGN KEY TogruteID REFERENCES Togrute on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT togruteID_fk FOREIGN KEY TogruteID REFERENCES Togrute on UPDATE CASCADE on DELETE CASCADE,
   )
 
 
@@ -71,13 +74,13 @@ CREATE TABLE DelstrekningErReservert(
   OrdreNr text, 
   SeteNr integer, 
   VognTypeNavn text,
-  CONSTRAINT DelstrekningsID FOREIGN KEY DelstrekningsID REFERENCES Delstrekning on UPDATE CASCADE on DELETE CASCADE,
-  CONSTRAINT OrdreNr FOREIGN KEY OrdreNr REFERENCES KundeOrdre on UPDATE CASCADE on DELETE CASCADE,
-  CONSTRAINT DelstrekningsID FOREIGN KEY DelstrekningsID REFERENCES Delstrekning on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT DelstrekningsID_fk FOREIGN KEY DelstrekningsID REFERENCES Delstrekning on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT OrdreNr_fk FOREIGN KEY OrdreNr REFERENCES KundeOrdre on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT DelstrekningsID_fk FOREIGN KEY DelstrekningsID REFERENCES Delstrekning on UPDATE CASCADE on DELETE CASCADE,
   )
-DelstrekningsID er fremmednøkkel mot Delstrekning
-OrdreNr er fremmednøkkel mot KundeOrdre
-SeteNr og VognTypeNavn er fremmednøkler mot Sete
+-- DelstrekningsID er fremmednøkkel mot Delstrekning
+-- OrdreNr er fremmednøkkel mot KundeOrdre
+-- SeteNr og VognTypeNavn er fremmednøkler mot Sete
 
 CREATE TABLE KundeOrdre(
   OrdreNr text not null, 
@@ -87,24 +90,24 @@ CREATE TABLE KundeOrdre(
   KundeID text, 
   Dato text, 
   TogruteID text
-  CONSTRAINT OrdreNr PRIMARY KEY OrdreNr,
-  CONSTRAINT TogruteID FOREIGN KEY TogruteID REFERENCES TogruteForekomst on UPDATE CASCADE on DELETE CASCADE,
-  CONSTRAINT Dato FOREIGN KEY Dato REFERENCES TogruteForekomst on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT OrdreNr_pk PRIMARY KEY OrdreNr,
+  CONSTRAINT TogruteID_fk FOREIGN KEY TogruteID REFERENCES TogruteForekomst on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT Dato_fk FOREIGN KEY Dato REFERENCES TogruteForekomst on UPDATE CASCADE on DELETE CASCADE,
   )
 
-KundeID er fremmednøkkel mot Kunde
-Dato og TogruteID er fremmednøkler mot TogruteForekomst
+-- KundeID er fremmednøkkel mot Kunde
+-- Dato og TogruteID er fremmednøkler mot TogruteForekomst
 
 CREATE TABLE Billetter(
   BillettID text not null, 
   type text, 
   OrdreNr text,
-  CONSTRAINT BillettID PRIMARY KEY BillettID,
-  CONSTRAINT OrdreNr FOREIGN KEY OrdreNr REFERENCES KundeOrdre on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT BillettID_pk PRIMARY KEY BillettID,
+  CONSTRAINT OrdreNr_fk FOREIGN KEY OrdreNr REFERENCES KundeOrdre on UPDATE CASCADE on DELETE CASCADE,
   )
-BillettID er primærnøkkel
-Type beskriver hvilken superklasse Billetten er
-OrdreNr er fremmednøkkel til KundeOrdre
+-- BillettID er primærnøkkel
+-- Type beskriver hvilken superklasse Billetten er
+-- OrdreNr er fremmednøkkel til KundeOrdre
 
 
 CREATE TABLE BillettKupée(
@@ -121,12 +124,12 @@ CREATE TABLE Kunde(
   Navn text, 
   E-post text, 
   Tlf * multiple VALUES,
-  CONSTRAINT KundeNr PRIMARY KEY KundeNr,
+  CONSTRAINT KundeNr_pk PRIMARY KEY KundeNr,
   )
 
 CREATE TABLE VognOppsett(
   VognOppsettID text not null,
-  CONSTRAINT VognOppsettID PRIMARY KEY VognOppsettID,
+  CONSTRAINT VognOppsettID_pk PRIMARY KEY VognOppsettID,
 
   )
 
@@ -142,8 +145,8 @@ VognTypeNavn er fremmednøkkel mot VognType
 CREATE TABLE HarVognType(
   OperatørNavn text not null, 
   VognNavn text,
-  CONSTRAINT OperatørNavn FOREIGN KEY OperatørNavn REFERENCES Operatør on UPDATE CASCADE on DELETE CASCADE,
-  CONSTRAINT VognNavn FOREIGN KEY VognNavn REFERENCES VognType on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT OperatørNavn_fk FOREIGN KEY OperatørNavn REFERENCES Operatør on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT VognNavn_fk FOREIGN KEY VognNavn REFERENCES VognType on UPDATE CASCADE on DELETE CASCADE,
   )
 OperatørNavn er fremmednøkkel mot Operatør
 --? Hvordan gjør vi dette??
@@ -152,14 +155,14 @@ VognNavn er fremmednøkkel mot sovevogn eller sittevogn, da vogntype-tabellen ik
 CREATE TABLE Sovevogn(
   Navn text not null, 
   AntallKupéer integer,
-  CONSTRAINT Navn PRIMARY KEY Navn,
+  CONSTRAINT Navn_pk PRIMARY KEY Navn,
   )
 
 CREATE TABLE Sittevogn(
   Navn text not null, 
   AntallRader integer, 
   SeterPerRad integer,
-  CONSTRAINT Navn PRIMARY KEY Navn,
+  CONSTRAINT Navn_pk PRIMARY KEY Navn,
 
   )
 
@@ -167,9 +170,9 @@ CREATE TABLE Seng(
   SengNr integer not NULL, 
   VognTypeNavn text, 
   BillettID text,
-  CONSTRAINT SengNr PRIMARY KEY SengNr, --? Hva gjør vi her?
-  CONSTRAINT VognTypeNavn FOREIGN KEY VognTypeNavn REFERENCES VognType on UPDATE CASCADE on DELETE CASCADE,
-  CONSTRAINT BillettID FOREIGN KEY BillettID REFERENCES Billetter on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT SengNr_pk PRIMARY KEY SengNr, --? Hva gjør vi her?
+  CONSTRAINT VognTypeNavn_fk FOREIGN KEY VognTypeNavn REFERENCES VognType on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT BillettID_fk FOREIGN KEY BillettID REFERENCES Billetter on UPDATE CASCADE on DELETE CASCADE,
 
 
   )
@@ -181,9 +184,9 @@ CREATE TABLE Sete(
   SeteNr integer not NULL, 
   VognTypeNavn text, 
   BillettID text,
-  CONSTRAINT SeteNr PRIMARY KEY SeteNr, --? Hva gjør vi her?
-  CONSTRAINT VognTypeNavn FOREIGN KEY VognTypeNavn REFERENCES VognType on UPDATE CASCADE on DELETE CASCADE,
-  CONSTRAINT BillettID FOREIGN KEY BillettID REFERENCES Billetter on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT SeteNr_pk PRIMARY KEY SeteNr, --? Hva gjør vi her?
+  CONSTRAINT VognTypeNavn_fk FOREIGN KEY VognTypeNavn REFERENCES VognType on UPDATE CASCADE on DELETE CASCADE,
+  CONSTRAINT BillettID_fk FOREIGN KEY BillettID REFERENCES Billetter on UPDATE CASCADE on DELETE CASCADE,
   )
 SeteNr er delvis nøkkel for sete
 VognTypeNavn er fremmednøkkel mot Sittevogn

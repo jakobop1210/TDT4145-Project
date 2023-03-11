@@ -4,18 +4,10 @@ CREATE TABLE Banestrekning (
         AntallStasjoner INTEGER,
         StartStasjon TEXT,
         SluttStasjon TEXT,
-        CONSTRAINT bs_pk PRIMARY KEY (Navn),
+        CONSTRAINT Banestrekning_pk PRIMARY KEY (Navn),
         CONSTRAINT start_fk FOREIGN KEY (StartStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE,
         CONSTRAINT slutt_fk FOREIGN KEY (SluttStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE
     )
-
-    CREATE TABLE Billetter (
-	BillettID INTEGER NOT NULL,
-	Type TEXT,
-	OrdreNr INTEGER,
-	CONSTRAINT billett_pk PRIMARY KEY (BillettID),
-	CONSTRAINT ordre_fk FOREIGN KEY (OrdreNr) REFERENCES KundeOrdre(OrdreNr) ON UPDATE CASCADE ON DELETE CASCADE
-)
 
 CREATE TABLE Delstrekning (
 	DelstrekningsID INTEGER NOT NULL,
@@ -75,10 +67,8 @@ CREATE TABLE Seng (
 CREATE TABLE Sete (
 	VognTypeNavn TEXT NOT NULL,
 	SeteNr INTEGER,
-	BillettID INTEGER,
 	CONSTRAINT sete_pk PRIMARY KEY (VognTypeNavn, SeteNr),
-	CONSTRAINT vogntype_fk FOREIGN KEY (VognTypeNavn) REFERENCES Sittevogn(Navn) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT billett_fk FOREIGN KEY (BillettID) REFERENCES Billetter(BillettID) ON UPDATE CASCADE ON DELETE CASCADE
+	CONSTRAINT vogntype_fk FOREIGN KEY (VognTypeNavn) REFERENCES Sittevogn(Navn) ON UPDATE CASCADE ON DELETE CASCADE
 )
 
 CREATE TABLE Sittevogn (
@@ -131,4 +121,15 @@ CREATE TABLE Ukedager (
 CREATE TABLE VognOppsett (
 	VognOppsettID INTEGER NOT NULL,
 	CONSTRAINT vognOppsett_pk PRIMARY KEY (VognOppsettID)
+)
+
+CREATE TABLE BillettSeteDelstrekning(
+  DelstrekningsID INTEGER NOT NULL,
+  OrdreNr INTEGER NOT NULL,
+  SeteNr INTEGER NOT NULL,
+  VognTypeNavn TEXT NOT NULL,
+  CONSTRAINT BillettSeteDelstrekning_pk PRIMARY KEY (DelstrekningsID, OrdreNr, SeteNr, VognTypeNavn),
+  CONSTRAINT Delstrekning_fk FOREIGN KEY (DelstrekningsID) REFERENCES Delstrekning ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT SeteNr_fk FOREIGN KEY (SeteNr) REFERENCES SeteNr ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT VognTypeNavn_fk FOREIGN KEY (VognTypeNavn) REFERENCES SitteVogn(Navn) ON UPDATE CASCADE ON DELETE CASCADE
 )

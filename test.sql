@@ -192,3 +192,13 @@ SeteNr er delvis nøkkel for sete
 VognTypeNavn er fremmednøkkel mot Sittevogn
 BillettID er fremmednøkkel mot Billetter
 
+CREATE TABLE BillettSeteDelstrekning(
+  DelstrekningsID INTEGER NOT NULL,
+  OrdreNr INTEGER NOT NULL,
+  SeteNr INTEGER NOT NULL,
+  VognTypeNavn TEXT NOT NULL,
+  CONSTRAINT BillettSeteDelstrekning_pk PRIMARY KEY (DelstrekningsID, OrdreNr, SeteNr, VognTypeNavn),
+  CONSTRAINT Delstrekning_fk FOREIGN KEY (DelstrekningsID) REFERENCES Delstrekning ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT SeteNr_fk FOREIGN KEY (SeteNr) REFERENCES SeteNr ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT VognTypeNavn_fk FOREIGN KEY (VognTypeNavn) REFERENCES SitteVogn(Navn) ON UPDATE CASCADE ON DELETE CASCADE
+)

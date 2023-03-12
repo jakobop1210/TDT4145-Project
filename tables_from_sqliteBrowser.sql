@@ -84,24 +84,24 @@ CREATE TABLE Sovevogn (
 	CONSTRAINT sovevogn_pk PRIMARY KEY (Navn)
 )
 
-CREATE TABLE "StasjonerIRute" (
-	"JernbanestasjonNavn"	TEXT NOT NULL,
-	"TogruteID"	INTEGER NOT NULL,
-	"Ankomsttid"	time,
-	"Avgangstid"	time,
-	CONSTRAINT "stasjonIRute_pk" PRIMARY KEY("JernbanestasjonNavn","TogruteID"),
-	CONSTRAINT "togrute_fk" FOREIGN KEY("TogruteID") REFERENCES "Togrute"("TogruteID") ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT "stasjon_fk" FOREIGN KEY("JernbanestasjonNavn") REFERENCES "JernbaneStasjon"("Navn") ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE StasjonerIRute (
+	JernbanestasjonNavn	TEXT NOT NULL,
+	TogruteID	INTEGER NOT NULL,
+	Ankomsttid	time,
+	Avgangstid	time,
+	CONSTRAINT stasjonIRute_pk PRIMARY KEY(JernbanestasjonNavn,TogruteID),
+	CONSTRAINT togrute_fk FOREIGN KEY(TogruteID) REFERENCES Togrute(TogruteID) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT stasjon_fk FOREIGN KEY(JernbanestasjonNavn) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE
 )
 
-CREATE TABLE "Togrute" (
-	"TogruteID"	INTEGER NOT NULL,
-	"Hovedretning"	INTEGER,
-	"OperatorNavn"	TEXT,
-	"VognOppsettID"	INTEGER,
-	CONSTRAINT "togrute_pk" PRIMARY KEY("TogruteID"),
-	CONSTRAINT "vongOppsett_fk" FOREIGN KEY("VognOppsettID") REFERENCES "VognOppsett"("VognOppsettID") ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT "operator_fk" FOREIGN KEY("OperatorNavn") REFERENCES "Operator"("Navn") ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE Togrute (
+	TogruteID	INTEGER NOT NULL,
+	Hovedretning	INTEGER,
+	OperatorNavn	TEXT,
+	VognOppsettID	INTEGER,
+	CONSTRAINT togrute_pk PRIMARY KEY(TogruteID),
+	CONSTRAINT vongOppsett_fk FOREIGN KEY(VognOppsettID) REFERENCES VognOppsett(VognOppsettID) ON UPDATE CASCADE ON DELETE SET NULL,
+	CONSTRAINT operator_fk FOREIGN KEY(OperatorNavn) REFERENCES Operator(Navn) ON UPDATE CASCADE ON DELETE CASCADE
 )
 
 CREATE TABLE TogruteForekomst(

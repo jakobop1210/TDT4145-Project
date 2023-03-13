@@ -1,13 +1,13 @@
 CREATE TABLE Banestrekning (
-        Navn TEXT NOT NULL,
-        Fremdriftsenergi TEXT,
-        AntallStasjoner INTEGER,
-        StartStasjon TEXT,
-        SluttStasjon TEXT,
-        CONSTRAINT Banestrekning_pk PRIMARY KEY (Navn),
-        CONSTRAINT start_fk FOREIGN KEY (StartStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE,
-        CONSTRAINT slutt_fk FOREIGN KEY (SluttStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE
-    )
+	Navn TEXT NOT NULL,
+	Fremdriftsenergi TEXT,
+	AntallStasjoner INTEGER,
+	StartStasjon TEXT,
+	SluttStasjon TEXT,
+	CONSTRAINT Banestrekning_pk PRIMARY KEY (Navn),
+	CONSTRAINT start_fk FOREIGN KEY (StartStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT slutt_fk FOREIGN KEY (SluttStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE
+)
 
 CREATE TABLE Delstrekning (
 	DelstrekningsID INTEGER NOT NULL,
@@ -56,9 +56,7 @@ CREATE TABLE Togrute (
 	TogruteID	INTEGER NOT NULL,
 	Hovedretning	INTEGER,
 	OperatorNavn	TEXT,
-	VognOppsettID	INTEGER,
 	CONSTRAINT togrute_pk PRIMARY KEY(TogruteID),
-	CONSTRAINT vongOppsett_fk FOREIGN KEY(VognOppsettID) REFERENCES VognOppsett(VognOppsettID) ON UPDATE CASCADE ON DELETE SET NULL,
 	CONSTRAINT operator_fk FOREIGN KEY(OperatorNavn) REFERENCES Operator(Navn) ON UPDATE CASCADE ON DELETE CASCADE
 )
 
@@ -130,13 +128,15 @@ CREATE TABLE Operatør(
 
 CREATE TABLE Sittevogn (
 	VognID INTEGER NOT NULL,
+	Navn TEXT,
+	NrIVognOppsett INTEGER,
 	AntallRader INTEGER,
 	SeterPerRad INTEGER,
 	OperatørNavn TEXT,
-	VognOppsettID INTEGER,
+	TogruteID INTEGER,
 	CONSTRAINT sittevogn_pk PRIMARY KEY (VognID)
 	CONSTRAINT operatør_fk FOREIGN KEY (OperatørNavn) REFERENCES Operatør(Navn) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT vognOppsett_fk FOREIGN KEY (VognOppsettID) REFERENCES VognOppsett(VognOppsettID) ON UPDATE CASCADE ON DELETE SET NULL
+	CONSTRAINT togrute_fk FOREIGN KEY (TogruteID) REFERENCES Togrute(TogruteID) ON UPDATE CASCADE ON DELETE SET NULL
 )
 
 CREATE TABLE Sete (
@@ -156,12 +156,14 @@ CREATE TABLE DelstrekningForSete (
 
 CREATE TABLE Sovevogn (
 	VognID INTEGER NOT NULL,
+	Navn TEXT,
+	NrIVognOppsett INTEGER,
 	AntallKupeer INTEGER,
 	OperatørNavn TEXT,
-	VognOppsettID INTEGER,
+	TogruteID INTEGER,
 	CONSTRAINT sovevogn_pk PRIMARY KEY (VognID),
 	CONSTRAINT operatør_fk FOREIGN KEY (OperatørNavn) REFERENCES Operatør(Navn) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT vognOppsett_fk FOREIGN KEY (VognOppsettID) REFERENCES VognOppsett(VognOppsettID) ON UPDATE CASCADE ON DELETE SET NULL
+	CONSTRAINT togrute_fk FOREIGN KEY (TogruteID) REFERENCES Togrute(TogruteID) ON UPDATE CASCADE ON DELETE SET NULL
 )
 
 CREATE TABLE Kupee (
@@ -170,40 +172,4 @@ CREATE TABLE Kupee (
 	CONSTRAINT kupee_pk PRIMARY KEY (KupeeNr, VognID),
 	CONSTRAINT sovevogn_fk FOREIGN KEY (VognID) REFERENCES Sovevogn(VognID) ON UPDATE CASCADE ON DELETE SET NULL
 )
-
-CREATE TABLE VognOppsett (
-	VognOppsettID INTEGER NOT NULL,
-	CONSTRAINT vognOppsett_pk PRIMARY KEY (VognOppsettID)
-)
-
-
-
-
--- CREATE TABLE BillettKupee (
--- 	OrdreNr INTEGER NOT NULL,
--- 	KupeeNr INTEGER NOT NULL,
--- 	VognID INTEGER NOT NULL, 
--- 	HarBestiltSeng1 INTEGER, 
--- 	HarBestiltSeng2 INTEGER,
--- 	CONSTRAINT billettKupee_pk PRIMARY KEY (OrdreNr, KupeeNr, VognID),
--- 	CONSTRAINT ordre_fk FOREIGN KEY (OrdreNr) REFERENCES KundeOrdre(OrdreNr) ON UPDATE CASCADE ON DELETE CASCADE,
--- 	CONSTRAINT kupee_fk FOREIGN KEY (KupeeNr, VognID) REFERENCES Kupee(KupeeNr, VognID) ON UPDATE CASCADE ON DELETE CASCADE
--- )
-
--- CREATE TABLE BillettDelstrekningForOrdreAvSete (
--- 	DelstrekningsID INTEGER NOT NULL, 
--- 	OrdreNr INTEGER NOT NULL,
--- 	CONSTRAINT billettForOrdreAvSete_pk PRIMARY KEY (DelstrekningsID, OrdreNr),
--- 	CONSTRAINT delstreknings_fk FOREIGN KEY DelstrekningsID REFERENCES Delstrekning(DelstrekningsID) ON UPDATE CASCADE ON DELETE CASCADE,
--- 	CONSTRAINT ordre_fk FOREIGN KEY OrdreNr REFERENCES KundeOrdre(OrdreNr) ON UPDATE CASCADE ON DELETE CASCADE
--- )
-
--- CREATE TABLE BillettSete(
--- 	OrdreNr INTEGER NOT NULL, 
--- 	SeteNr INTEGER NOT NULL, 
--- 	VognID INTEGER NOT NULL,
--- 	CONSTRAINT billettSete_pk PRIMARY KEY (OrdreNr, SeteNr, VognID),
--- 	CONSTRAINT kundeOrdre_fk FOREIGN KEY (OrdreNr) REFERENCES KundeOrdre(OrdreNr) ON UPDATE CASCADE ON DELETE CASCADE,
--- 	CONSTRAINT sete_fk FOREIGN KEY (SeteNr, VognID) REFERENCES Sete(SeteNr, VognID) ON UPDATE CASCADE ON DELETE CASCADE
--- )
 

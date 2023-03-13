@@ -97,6 +97,7 @@ CREATE TABLE Kunde (
 
 CREATE TABLE BillettKupee (
 	BillettID INTEGER NOT NULL, 
+	SengeNr INTEGER,
 	OrdreNr INTEGER, 
 	Dato date, 
 	TogruteID INTEGER, 

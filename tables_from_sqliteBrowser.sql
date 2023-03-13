@@ -20,14 +20,6 @@ CREATE TABLE Delstrekning (
 	CONSTRAINT slutt_fk FOREIGN KEY (StartStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE
 )
 
-CREATE TABLE DelstrekningErReservert (
-	DelstrekningsID INTEGER NOT NULL,
-	OrdreNr INTEGER NOT NULL,
-	CONSTRAINT reservert_pk PRIMARY KEY (DelstrekningsID, OrdreNr),
-	CONSTRAINT delstreking_fk FOREIGN KEY (DelstrekningsID) REFERENCES Delstrekning(DelstrekningsID) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT ordre_fk FOREIGN KEY (OrdreNr) REFERENCES KundeOrdre(OrdreNr) ON UPDATE CASCADE ON DELETE CASCADE
-)
-
 CREATE TABLE InneholderStrekning (
 	BanestrekningsNavn TEXT NOT NULL,
 	DelstrekningsID TEXT NOT NULL,

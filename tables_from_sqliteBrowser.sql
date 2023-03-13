@@ -38,7 +38,7 @@ CREATE TABLE InneholderStrekning (
 
 CREATE TABLE JernbaneStasjon (
 	Navn TEXT NOT NULL,
-	Moh INTEGER,
+	Moh REAL,
 	CONSTRAINT stasjon_pk PRIMARY KEY (Navn)
 )
 
@@ -162,7 +162,7 @@ CREATE TABLE Kupee (
 )
 
 CREATE TABLE BillettKupee (
-	OrdreNr INTEGER NOT NULL, 
+	OrdreNr INTEGER NOT NULL,
 	KupeeNr INTEGER NOT NULL,
 	VognTypeNavn TEXT NOT NULL, 
 	HarBestiltSeng1 INTEGER, 

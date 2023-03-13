@@ -70,7 +70,6 @@ CREATE TABLE KundeOrdre(
 	OrdreNr INTEGER NOT NULL,
 	Dag date,
 	tid TEXT,
-	AntallBilletter INTEGER, 
 	KundeID INTEGER, 
 	Dato date, 
 	TogruteID INTEGER,

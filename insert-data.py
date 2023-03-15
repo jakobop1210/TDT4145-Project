@@ -13,8 +13,8 @@ con.commit()
 # Brukerhistorie C 
 def togruterInnomStasjon(ukedag):
     #cursor.execute("SELECT * FROM  WHERE navn =:navn", {"navn" = ukedag})
-   # row = cursor.fetchall()
-   # print("First row from table person:")
+    #row = cursor.fetchall()
+    #print("First row from table person:")
     #print(row)
 
 # Brukerhistorie D 

@@ -1,4 +1,4 @@
-CREATE TABLE Banestrekning (
+CREATE TABLE Banestrekning ( 
         Navn TEXT NOT NULL,
         Fremdriftsenergi TEXT,
         AntallStasjoner INTEGER,
@@ -7,11 +7,11 @@ CREATE TABLE Banestrekning (
         CONSTRAINT Banestrekning_pk PRIMARY KEY (Navn),
         CONSTRAINT start_fk FOREIGN KEY (StartStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE,
         CONSTRAINT slutt_fk FOREIGN KEY (SluttStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE
-    )
+)
 
 CREATE TABLE Delstrekning (
 	DelstrekningsID INTEGER NOT NULL,
-	Sportype CHAR(1),
+	Sportype INTEGER,
 	Lengde INTEGER,
 	StartStasjon TEXT,
 	SluttStasjon TEXT,
@@ -152,7 +152,7 @@ CREATE TABLE HarVognType (
 	CONSTRAINT harVognType_pk PRIMARY KEY (OperatørNavn, VognTypeNavn),
 	CONSTRAINT sittevogn_fk FOREIGN KEY (VognTypeNavn) REFERENCES Sittevogn(Navn) ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT sovevogn_fk FOREIGN KEY (VognTypeNavn) REFERENCES Sovevogn(Navn) ON UPDATE CASCADE ON DELETE CASCADE
-)
+)r
 
 CREATE TABLE Kupee (
 	KupeeNr INTEGER NOT NULL,

@@ -39,7 +39,7 @@ cursor = con.cursor()
 #cursor.execute('''INSERT INTO StasjonerIRute VALUES ("Mosjøen", 1, "13:15", "13:20")''')
 #cursor.execute('''INSERT INTO StasjonerIRute VALUES ("Mo i Rana", 1, "14:26", "14:31")''')
 #cursor.execute('''INSERT INTO StasjonerIRute VALUES ("Fauske", 1, "16:44", "16:49")''')
-#cursor.execute('''INSERT INTO StasjonerIRute VALUES ("Bodø", 1, "17:29", NULL)''')
+#cursor.execute('''INSERT INTO StasjonerIRute VALUES ("Bodø", 1, "17:34", NULL)''')
 
 # Togrute 2
 #cursor.execute('''INSERT INTO StasjonerIRute VALUES ("Trondheim", 2, NULL, "23:05")''')

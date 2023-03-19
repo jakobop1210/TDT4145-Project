@@ -106,9 +106,9 @@ def finn_ledige_seter():
 
     print("Din ordre er bestilt!")
             
-    ####                                                  ####
-    #### MANGLER STØTTE FOR KUPEER OG VALDIERING AV INPUT ####
-    ####                                                  ####   
+    ####                                                                    ####
+    #### MANGLER STØTTE FOR KUPEER, BRUKERINNLOGGING OG VALDIERING AV INPUT ####
+    ####                                                                    ####   
 
 
 finn_ledige_seter()

@@ -3,18 +3,6 @@ import sqlite3
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
-# togruteforekomster = cursor.execute('''SELECT * FROM TogruteForekomst''')
-# for togruteforekomst in togruteforekomster:   
-#     for i in range(1, 13):
-#         cursor.execute('''INSERT INTO BillettSete(OrdreNr, Dato, TogruteID, SeteNr, VognID) VALUES (NULL, :Dato, :TogruteID, :SeteNr, :VognID)''', 
-#                        {'Dato': togruteforekomst[0], 'TogruteID': togruteforekomst[1], 'SeteNr': i, 'VognID': "NULL"}) #PROBLEM AT VOGNID ER NULL
-
-
-#Finn ledige seter (billetter) på en del-togrute
-# - Betyr: Finn alle ledige seter for delstrekningene for alle del-togrutene
-#   -> Antar at det kun skal vises billetter som er ledige hele del-togruten
-
-
 def finn_ledige_seter():
     startstasjon = "Trondheim"
     sluttstasjon = "Bodø"
@@ -90,13 +78,23 @@ def finn_ledige_seter():
 
     #KJØP BILLETTER
     print()
+    typeBillett = input("Vennligst velg hvilken type billett du vil kjøpe: (1) Sittebillett, (2) Kupeebillett")
+
     print("Vennligst velg hvilken billett du vil kjøpe:")
     togrutenr = input("Velg et togrute nummer: ")
     cursor.execute('''
         INSERT INTO KundeOrdre (Dag, tid, KundeID, Dato, TogruteID) VALUES (:Dato, :Tid, :KundeID, :Dato, :TogruteID)
     ''', {'Dato': dato, 'Tid': dato, 'KundeID': 1, 'TogruteID': togrutenr}).fetchall()
-    ordreID = cursor.lastrowid
+    ordreID = cursor.lastrowid 
 
+    if (typeBillett == "1"):
+        velgSitteBillett(ordreID, togrutenr)
+    elif (typeBillett == "2"):
+        velgKupeebillett(ordreID, togrutenr)
+    else:
+        print("Du valgte ikke en gyldig type billett!")
+
+def velgSitteBillett(ordreID, togrutenr):
     billettDato = input("Velg dato for billetten: ")
     vognNr = input("Velg vogn nummer: ")
     seteNr = input("Velg sete nummer: ")
@@ -106,10 +104,33 @@ def finn_ledige_seter():
 
     print("Din ordre er bestilt!")
             
+
+def velgKupeebillett(ordreID, togrutenr):
+    billettDato = input("Velg dato for billetten: ")
+    vognNr = input("Velg vogn nummer: ")
+    kupeeNr = input("Velg sete nummer: ")
+    antallSenger = input("Hvor mange senger vil du ha?")
+    if antallSenger == 2:
+        cursor.execute(''' 
+            INSERT INTO BillettKupee (OrdreNr, Dato, TogruteID, KupeeNr, VognID) VALUES (:OrdreNr, :Dato, :TogruteID, :SeteNr, :VognID)
+        ''', {'OrdreNr': ordreID, 'Dato': billettDato, 'TogruteID': togrutenr, 'KupeeNrs': kupeeNr, 'VognID': vognNr})
+        cursor.execute(''' 
+            INSERT INTO BillettKupee (OrdreNr, Dato, TogruteID, KupeeNr, VognID) VALUES (:OrdreNr, :Dato, :TogruteID, :SeteNr, :VognID)
+        ''', {'OrdreNr': ordreID, 'Dato': billettDato, 'TogruteID': togrutenr, 'KupeeNrs': kupeeNr, 'VognID': vognNr})
+        print("Din ordre er bestilt!")
+    else:
+        cursor.execute(''' 
+            INSERT INTO BillettKupee (OrdreNr, Dato, TogruteID, SeteNr, VognID) VALUES (:OrdreNr, :Dato, :TogruteID, :SeteNr, :VognID)
+        ''', {'OrdreNr': ordreID, 'Dato': billettDato, 'TogruteID': togrutenr, 'SeteNr': kupeeNr, 'VognID': vognNr})
+        print("Din ordre er bestilt!")
+        
+            
+    
+
     ####                                                                    ####
     #### MANGLER STØTTE FOR KUPEER, BRUKERINNLOGGING OG VALDIERING AV INPUT ####
     ####                                                                    ####   
-
+    # - Må kunne kjøpe 1/2 senger i kupeen
 
 finn_ledige_seter()
 

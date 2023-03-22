@@ -1,3 +1,6 @@
+import re
+import sqlite3
+import datetime
 
 # ? For en bruker skal man kunne finne all informasjon om de kjøpene hen har gjort for fremtidige
 # ? reiser. Denne funksjonaliteten skal programmeres.
@@ -5,10 +8,89 @@
 
 # ? Fremgangsmåte
 # finne en kunde med brukerid fra kunde tabellen
-# joine den med kundeordre på KundeID for å finne alle ordre til en kunde
 # joine med BillettSete og BillettKupee på OrdreNr
+# joine den med kundeordre på KundeID for å finne alle ordre til en kunde
 #
 
-import re
+# uisdahø@gmail.com
 
+# SELECT *
 
+# FROM KundeOrdre as KO
+# 	NATURAL JOIN Togrute as TR
+# 	NATURAL JOIN TogruteForekomst as TRFK
+# 	NATURAL JOIN StasjonerIRute as SIR
+	
+# where StasjonsNr == 1
+
+'''
+SELECT *
+FROM KundeOrdre as KO
+	NATURAL JOIN Togrute as TR
+	NATURAL JOIN TogruteForekomst as TRFK
+	NATURAL JOIN StasjonerIRute as SIR
+	
+where StasjonsNr == 1  and ( KO.KundeNr == 1) and (TRFK.Dato > 2023-04-03 or (TRFK.Dato == 2023-04-03 and SIR.Avgangstid > 10:00) )
+'''
+
+'''
+        SELECT *
+        from kunde  as k natural join KundeOrdre as ko inner join BillettSete as bs on (ko.OrdreNr == bs.OrdreNr)
+        WHERE k.KundeNr == :KundeNr and ((ko.Dato < :current_date) or (ko.Dato == :current_date and ko.tid > :current_clock_time))
+'''
+
+con = sqlite3.connect('jernbane.db')
+cursor = con.cursor()
+
+def fremtidigeReiser():
+    KundeNr = getUserID()
+    current_time = datetime.datetime.now()
+    current_date = f"{current_time.year}-{current_time.month}-{current_time.day}"
+    current_clock_time = f"{current_time.hour}:{current_time.second}"
+    print(current_date)
+    print(current_time)
+
+    req = cursor.execute(
+        """
+  SELECT *
+
+  FROM KundeOrdre as KO
+    NATURAL JOIN Togrute as TR
+    NATURAL JOIN TogruteForekomst as TRFK
+    NATURAL JOIN StasjonerIRute as SIR
+	
+  where StasjonsNr == 1  and ( KO.KundeNr == :KundeNr) and (TRFK.Dato < :current_date)
+        """
+        ,{'KundeNr': KundeNr, "current_date" :current_date, "current_clock_time": current_clock_time})
+    res = req.fetchall()
+    print(res)
+
+# and (TRFK.Dato > :current_date or (TRFK.Dato == :current_date  and SIR.Avgangstid > :current_clock_time) )
+
+# or (ko.Dato == :current_date and ko.Tidspunkt > :current_clock_time)
+def getUserID():
+    '''
+        Henter brukerID basert på email til en bruker. Spør på nytt om bruker ikke finnes.
+    '''
+    email = input("Skriv in email('ctrl + c' to quit): ")
+
+    if not email or len(email) < 2:
+        print("Ugyldig email. Prøv igjen")
+        return getUserID()
+
+    userID = cursor.execute('''
+        SELECT KundeNr
+        from kunde
+        WHERE Epost == :email
+    ''',{'email': email})
+    list = userID.fetchall()
+
+    if not list:
+        print("Ugyldig email, prøv på nytt.")
+        return getUserID()
+
+    return list[0][0]
+
+fremtidigeReiser()
+
+con.commit()

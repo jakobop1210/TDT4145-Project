@@ -39,6 +39,7 @@ CREATE TABLE StasjonerIRute (
 	TogruteID	INTEGER NOT NULL,
 	Ankomsttid	time,
 	Avgangstid	time,
+	StasjonsNr INTEGER
 	CONSTRAINT stasjonIRute_pk PRIMARY KEY(JernbanestasjonNavn,TogruteID),
 	CONSTRAINT togrute_fk FOREIGN KEY(TogruteID) REFERENCES Togrute(TogruteID) ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT stasjon_fk FOREIGN KEY(JernbanestasjonNavn) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE

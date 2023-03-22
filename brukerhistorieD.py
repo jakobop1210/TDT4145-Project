@@ -24,9 +24,9 @@ def finnTogruter():
         WHERE (Dato = :dato OR Dato = :datoDagEtter)
         AND startStasjonIRute.JernbanestasjonNavn = :startStasjon
         AND sluttStasjonIRute.JernbanestasjonNavn = :sluttStasjon
-		AND  startStasjonIRute.StasjonsNr < SluttStasjonIRute.StasjonsNr
+		    AND startStasjonIRute.StasjonsNr < SluttStasjonIRute.StasjonsNr
         AND startStasjonIRute.Avgangstid >= :klokkeslett
-		ORDER BY Dato, startStasjonIRute.Avgangstid
+		    ORDER BY Dato, startStasjonIRute.Avgangstid
         """, {"dato": dato, "datoDagEtter": datoDagEtter, "startStasjon": stasjoner[0], "sluttStasjon": stasjoner[1], "klokkeslett": klokkeslett})
     rows = togruter.fetchall()
 

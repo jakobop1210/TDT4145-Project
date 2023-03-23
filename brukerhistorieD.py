@@ -5,34 +5,66 @@ from datetime import datetime, timedelta
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
+
 def finnTogruter():
     # Spør brukeren om input for stasjonsnavn, dato og klokkeslett
     print("Vennligst fyll ut ønsket startstasjon")
     stasjoner = stasjonsInput()
     dato = datoInput().date()
     datoDagEtter = dato + timedelta(days=1)
+    print(dato, datoDagEtter)
     klokkeslett = klokkeslettInput()
-    
-    # Finner TogruteID'en for Togruter som går mellom oppgitt start- og sluttstasjon,
-    # på oppgitt dato etter oppgitt klokkeslett
+
+    # I SECLECT-delen settes Dato til + 1 dag hvis valgt startStasjon har avgangstid som er 
+    # mindre enn avgangstiden for togruten sin startstasjon, da dette betyr at togruten går over to datoer.
+    # I WHERE-delen så sjekkes det samme som i SELECT-delen to ganger, for å se om faktisk Dato 
+    # enten er lik dato og avgangstid >= klokkeslett, eller bare lik datoDagEtter. 
+    # Videre sjekkes det for at startStasjon og sluttStasjon er riktig, i tillegg til at
+    # startStasjon sitt StasjonNr må være mindre enn sluttStasjon sitt stasjonNr 
+    # for å sjekke at togruten går riktig vei. 
     togruter = cursor.execute("""
-        SELECT Togrute.TogruteID, startStasjonIRute.Avgangstid,  sluttStasjonIRute.Ankomsttid, Dato
-        FROM Togrute
-        JOIN StasjonerIRute AS startStasjonIRute ON Togrute.TogruteID = startStasjonIRute.TogruteID
-        JOIN StasjonerIRute AS sluttStasjonIRute ON Togrute.TogruteID = sluttStasjonIRute.TogruteID
-        JOIN TogruteForekomst ON Togrute.TogruteID = TogruteForekomst.TogruteID
-        WHERE (Dato = :dato OR Dato = :datoDagEtter)
-        AND startStasjonIRute.JernbanestasjonNavn = :startStasjon
-        AND sluttStasjonIRute.JernbanestasjonNavn = :sluttStasjon
-		    AND startStasjonIRute.StasjonsNr < SluttStasjonIRute.StasjonsNr
-        AND startStasjonIRute.Avgangstid >= :klokkeslett
-		    ORDER BY Dato, startStasjonIRute.Avgangstid
-        """, {"dato": dato, "datoDagEtter": datoDagEtter, "startStasjon": stasjoner[0], "sluttStasjon": stasjoner[1], "klokkeslett": klokkeslett})
+        SELECT Tog.TogruteID, startStasjonIRute.Avgangstid, sluttStasjonIRute.Ankomsttid,
+            CASE WHEN startStasjonIRute.Avgangstid < (
+                SELECT StasjonerIRute.Avgangstid 
+                FROM Togrute AS Tog2 NATURAL JOIN StasjonerIRute 
+                WHERE Tog.TogruteID = Tog2.TogruteID AND StasjonerIRute.Ankomsttid IS NULL
+            )
+            THEN DATE(Dato, "+1 day")
+            ELSE Dato END AS Dato
+        FROM Togrute AS Tog NATURAL JOIN StasjonerIRute AS startStasjonIRute
+             INNER JOIN StasjonerIRute AS sluttStasjonIRute ON Tog.TogruteID = sluttStasjonIRute.TogruteID
+             INNER JOIN TogruteForekomst ON Tog.TogruteID = TogruteForekomst.TogruteID
+        WHERE 
+            ((CASE WHEN startStasjonIRute.Avgangstid < (
+                SELECT StasjonerIRute.Avgangstid 
+                FROM Togrute AS Tog2 NATURAL JOIN StasjonerIRute 
+                WHERE Tog.TogruteID = Tog2.TogruteID AND StasjonerIRute.Ankomsttid IS NULL
+            )
+            THEN DATE(Dato, "+1 day")
+            ELSE Dato END = :dato AND startStasjonIRute.Avgangstid >= :klokkeslett)
+             OR
+            (CASE WHEN startStasjonIRute.Avgangstid < (
+                SELECT StasjonerIRute.Avgangstid 
+                FROM Togrute AS Tog2 NATURAL JOIN StasjonerIRute 
+                WHERE Tog.TogruteID = Tog2.TogruteID AND StasjonerIRute.Ankomsttid IS NULL
+            )
+            THEN DATE(Dato, "+1 day")
+            ELSE Dato END = :datoDagEtter))
+            AND startStasjonIRute.JernbanestasjonNavn = :startStasjon
+            AND sluttStasjonIRute.JernbanestasjonNavn = :sluttStasjon
+		    AND startStasjonIRute.StasjonsNr < SluttStasjonIRute.StasjonsNr   
+		ORDER BY Dato, startStasjonIRute.Avgangstid
+        """, {
+            "dato": dato, "datoDagEtter": datoDagEtter, "startStasjon": stasjoner[0], 
+            "sluttStasjon": stasjoner[1], "klokkeslett": klokkeslett
+        })
+
     rows = togruter.fetchall()
 
+    if not rows:
+        print(f'''Det finnes ingen togruter som går mellom {stasjoner[0]} og {stasjoner[1]} den {dato} etter kl {klokkeslett}, eller den {datoDagEtter}''')
     for row in rows:
         print(f'''Tognr {row[0]} går fra {stasjoner[0]} kl {row[1]} og ankommer {stasjoner[1]} kl {row[2]} den {row[3]}''')
-
 
 con.commit()
 
@@ -76,6 +108,5 @@ def klokkeslettInput():
         return klokkeslett
     print("Ikke gyldig klokkeslett, prøv igjen")
     return klokkeslettInput()
-
 
 finnTogruter()

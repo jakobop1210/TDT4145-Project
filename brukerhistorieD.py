@@ -5,18 +5,6 @@ from datetime import datetime, timedelta
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
-# Finner Avgangstid på første stasjon i en Togrute basert på TogruteaID'en
-def avgangstidTogrute(TogruteID):
-    togruter = cursor.execute("""
-        SELECT StasjonerIRute.Avgangstid 
-        FROM Togrute NATURAL JOIN StasjonerIRute 
-        WHERE Togrute.TogruteID = :TogruteIDParam AND StasjonerIRuteAnkomsttid IS NULL
-    """, {"TogruteIDParam": TogruteID})
-
-    avgangstid = togruter.fetchall()
-    return 1
-
-con.create_function("avgangstidTogrute", 1, avgangstidTogrute)
 
 def finnTogruter():
     # Spør brukeren om input for stasjonsnavn, dato og klokkeslett
@@ -27,19 +15,41 @@ def finnTogruter():
     print(dato, datoDagEtter)
     klokkeslett = klokkeslettInput()
 
+    # I SECLECT-delen settes Dato til + 1 dag hvis valgt startStasjon har avgangstid som er 
+    # mindre enn avgangstiden for togruten sin startstasjon, da dette betyr at togruten går over to datoer.
+    # I WHERE-delen så sjekkes det samme som i SELECT-delen to ganger, for å se om faktisk Dato 
+    # enten er lik dato og avgangstid >= klokkeslett, eller bare lik datoDagEtter. 
+    # Videre sjekkes det for at startStasjon og sluttStasjon er riktig, i tillegg til at
+    # startStasjon sitt StasjonNr må være mindre enn sluttStasjon sitt stasjonNr 
+    # for å sjekke at togruten går riktig vei. 
     togruter = cursor.execute("""
-        SELECT Tog.TogruteID, startStasjonIRute.Avgangstid, sluttStasjonIRute.Ankomsttid, Dato
+        SELECT Tog.TogruteID, startStasjonIRute.Avgangstid, sluttStasjonIRute.Ankomsttid,
+            CASE WHEN startStasjonIRute.Avgangstid < (
+                SELECT StasjonerIRute.Avgangstid 
+                FROM Togrute AS Tog2 NATURAL JOIN StasjonerIRute 
+                WHERE Tog.TogruteID = Tog2.TogruteID AND StasjonerIRute.Ankomsttid IS NULL
+            )
+            THEN DATE(Dato, "+1 day")
+            ELSE Dato END AS Dato
         FROM Togrute AS Tog NATURAL JOIN StasjonerIRute AS startStasjonIRute
              INNER JOIN StasjonerIRute AS sluttStasjonIRute ON Tog.TogruteID = sluttStasjonIRute.TogruteID
              INNER JOIN TogruteForekomst ON Tog.TogruteID = TogruteForekomst.TogruteID
         WHERE 
+            ((CASE WHEN startStasjonIRute.Avgangstid < (
+                SELECT StasjonerIRute.Avgangstid 
+                FROM Togrute AS Tog2 NATURAL JOIN StasjonerIRute 
+                WHERE Tog.TogruteID = Tog2.TogruteID AND StasjonerIRute.Ankomsttid IS NULL
+            )
+            THEN DATE(Dato, "+1 day")
+            ELSE Dato END = :dato AND startStasjonIRute.Avgangstid >= :klokkeslett)
+             OR
             (CASE WHEN startStasjonIRute.Avgangstid < (
                 SELECT StasjonerIRute.Avgangstid 
                 FROM Togrute AS Tog2 NATURAL JOIN StasjonerIRute 
                 WHERE Tog.TogruteID = Tog2.TogruteID AND StasjonerIRute.Ankomsttid IS NULL
             )
             THEN DATE(Dato, "+1 day")
-            ELSE Dato END  = :dato AND startStasjonIRute.Avgangstid >= :klokkeslett)
+            ELSE Dato END = :datoDagEtter))
             AND startStasjonIRute.JernbanestasjonNavn = :startStasjon
             AND sluttStasjonIRute.JernbanestasjonNavn = :sluttStasjon
 		    AND startStasjonIRute.StasjonsNr < SluttStasjonIRute.StasjonsNr   
@@ -52,7 +62,7 @@ def finnTogruter():
     rows = togruter.fetchall()
 
     if not rows:
-        print('''Det finnes ingen togruter som går mellom ''')
+        print(f'''Det finnes ingen togruter som går mellom {stasjoner[0]} og {stasjoner[1]} den {dato} etter kl {klokkeslett}, eller den {datoDagEtter}''')
     for row in rows:
         print(f'''Tognr {row[0]} går fra {stasjoner[0]} kl {row[1]} og ankommer {stasjoner[1]} kl {row[2]} den {row[3]}''')
 
@@ -72,7 +82,7 @@ def stasjonsInput():
     alleStasjonsNavn = jernbanestasjoner.fetchall()
 
     # Kaller funksjonen på nytt hvis inputen er ugyldig
-    if (startStasjon or sluttStasjon)  not in [navn[0] for navn in alleStasjonsNavn]:
+    if (startStasjon and sluttStasjon)  not in [navn[0] for navn in alleStasjonsNavn]:
         print("Ikke gyldig jernbanestasjoner, prøv igjen")
         stasjonsInput()
     elif startStasjon == sluttStasjon:

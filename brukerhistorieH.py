@@ -84,13 +84,25 @@ def getUserID():
         WHERE Epost == :email
     ''',{'email': email})
     list = userID.fetchall()
+    print(list)
 
     if not list:
         print("Ugyldig email, prøv på nytt.")
         return getUserID()
 
-    return list[0][0]
+    return str(list[0][0])
+
+def brukerBiletter(brukerID:str):
+    '''
+        Henter alle billetter til en bruker basert på brukerID
+    '''
+    billetter = cursor.execute('''
+        SELECT KundeNr
+        from kunde
+        WHERE Epost == :email
+    ''',{'brukerID': brukerID})
+    allTickets = billetter.fetchall()
+    print(allTickets)
 
 fremtidigeReiser()
-
 con.commit()

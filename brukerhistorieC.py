@@ -2,16 +2,17 @@ import sqlite3
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
-# Brukerhistorie C 
+# Brukerhistorie C
 
 # Legge inn data i  Ukedager-tabellen
 #hverdager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"]
-alleDager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
+alleDager = ["Mandag", "Tirsdag", "Onsdag",
+             "Torsdag", "Fredag", "Lørdag", "Søndag"]
 #
-#for i in hverdager:
+# for i in hverdager:
 #    cursor.execute(f'''INSERT INTO Ukedager VALUES (1, '{i}')''')
 #    cursor.execute(f'''INSERT INTO Ukedager VALUES (3, '{i}')''')
-#for i in alleDager:
+# for i in alleDager:
 #    cursor.execute(f'''INSERT INTO Ukedager VALUES (2, '{i}')''')
 
 
@@ -33,7 +34,7 @@ def finnTogruterInnomStasjon():
         )
         """, {"ukedag": ukedag, "stasjonsNavn": stasjon})
     rows = togruterInnomStasjon.fetchall()
-    
+
     # Looper gjennom alle TogruteID'er fra spørringen over
     for row in rows:
         # Finner startstasjon for spesifikk TogruteID
@@ -54,10 +55,10 @@ def finnTogruterInnomStasjon():
 
         sluttstasjonForTogrute = sluttstasjon.fetchall()
 
-        # Finner tidspunktet Togruten går innom stasjonen oppgitt av brukeren 
+        # Finner tidspunktet Togruten går innom stasjonen oppgitt av brukeren
         if (stasjon == sluttstasjonForTogrute[0][0]):
             innomStasjonTidspunkt = sluttstasjonForTogrute[0][1]
-        else: 
+        else:
             stasjonsTidspunkt = cursor.execute("""
                 SELECT Avgangstid
                 FROM StasjonerIRute
@@ -67,35 +68,42 @@ def finnTogruterInnomStasjon():
             innomStasjonTidspunkt = stasjonsTidspunkt.fetchall()[0][0]
 
         # Printer resultatet til terminalen
-        print(f'''Togrute nr {row[0]} fra {startstasjonForTogrute[0][0]} til {sluttstasjonForTogrute[0][0]} kjører innom {stasjon} på {ukedag}er kl {innomStasjonTidspunkt}.''')
+        if not row:
+            print("Ingen togruter går innom denne stasjonen på denne ukedagen")
+        else:
+            print(
+                f'''Togrute nr {row[0]} fra {startstasjonForTogrute[0][0]} til {sluttstasjonForTogrute[0][0]} kjører innom {stasjon} på {ukedag}er kl {innomStasjonTidspunkt}.''')
 
 # Henter inn bruker input for jernbanestasjon, og validrer input'en
+
+
 def stasjonsInput():
     stasjonInput = input("Jernbanestasjon: ")
     # Sørge for at bruk av små og store bokstaver ikke påvirker input'en
-    stasjon = ' '.join([x.capitalize() if len(x) > 1 else x.lower() for x in stasjonInput.split()]) 
+    stasjon = ' '.join([delNavn.capitalize() if len(
+        delNavn) > 1 else delNavn.lower() for delNavn in stasjonInput.split()])
 
     # Finner alle jernbanestasjoner i databasen
     jernbanestasjoner = cursor.execute("SELECT Navn FROM Jernbanestasjon")
     alleStasjonsNavn = jernbanestasjoner.fetchall()
 
     # Kaller funksjonen på nytt hvis inputen er ugyldig
-    if stasjon  not in [navn[0] for navn in alleStasjonsNavn]:
+    if stasjon not in [navn[0] for navn in alleStasjonsNavn]:
         print("Ikke gyldig jernbanestasjon, prøv igjen")
         stasjonsInput()
     return stasjon
 
 # Henter inn bruker input for ukedag, og validrer input'en
+
+
 def ukedagInput():
     ukedag = input("Ukedag: ").capitalize()
     if ukedag not in alleDager:
         print("Ikke gyldig ukedag, prøv igjen")
         ukedagInput()
-        
     return ukedag
+
 
 finnTogruterInnomStasjon()
 
 con.commit()
-
-

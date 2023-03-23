@@ -1,11 +1,11 @@
 import sqlite3
 import datetime
-
+from datetime import datetime, timedelta
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
 def find_time():
-    current_time = datetime.datetime.now()
+    current_time = datetime.now()
     hour = current_time.hour
     minute = current_time.minute
     if len(str(current_time.hour))<2:
@@ -24,15 +24,49 @@ def find_time():
     current_date = f"{current_time.year}-{month}-{day}"
     current_clock_time = f"{hour}:{minute}"
 
-    print(current_date)
-    print(current_clock_time)
+   
 
     return current_date, current_clock_time
 
+def datoInput():
+    dato = input("Dato (for.eks 2023-04-03): \n\n")
+    try:
+        dato = datetime.strptime(dato, "%Y-%m-%d")
+        return dato
+    except:
+        print("Ikke gyldig dato, prøv igjen")
+        return datoInput()
+
+def tidspunktInput():
+    tidspunkt = input("Tidspunkt (for.eks 12:30): \n\n")
+    try:
+        tidspunkt = datetime.strptime(tidspunkt, "%H:%M")
+        return tidspunkt
+    except:
+        print("Ikke gyldig tidspunkt, prøv igjen")
+        return tidspunktInput()
     
-def fremtidige_reiser():
-    brukerID = getUserID()
-    current_date, current_clock_time = find_time()
+def user_time():
+    date = datoInput().date()
+    time = str(tidspunktInput().time())[:-3]
+    return date, time
+
+def main():
+    bruker = getUser()
+    print(f"Velkommen {bruker[1]}\n\n Epost: {bruker[2]}, Telefon: {bruker[3]}, BrukerID: {bruker[0]}\n")
+    fremtidige_reiser(bruker[0])
+    
+def fremtidige_reiser(brukerID:str):
+    own_time_or_date = input("Vil du se fremtidige reiser basert på tidspunktet nå, eller et spesifikt tidspunkt? (nå[n]/egendefinert[e]): \n\n")
+    if own_time_or_date.lower() == "e":
+        current_date, current_clock_time = user_time()
+    elif own_time_or_date.lower() == "n":
+        current_date, current_clock_time = find_time()
+    else:
+        print("Ugyldig input, prøv igjen")
+        return fremtidige_reiser(brukerID)
+    
+    print(f"Reiser etter {current_date} {current_clock_time}\N{HOURGLASS}\n")
 
     res = cursor.execute(
         '''
@@ -82,13 +116,13 @@ FROM
     output_string = ""
 
     for ticket in allTickets:
-        output_string += f"Your ticket {ticket[0]} for a travel the {ticket[2]}\nOrderNumber: {ticket[1]}  From {ticket[4]} To  {ticket[5]} \N{HOURGLASS} Departure: {ticket[6]}\n\n"
+        output_string += f"Traveler: {ticket[0]} Date: {ticket[2]}\nOrderNumber: {ticket[1]}  From '{ticket[4]}' To  '{ticket[5]}'  Departure: '{ticket[6]}'\N{HOURGLASS}\n\n"
 
     
     print(output_string)
 	 
 
-def getUserID():
+def getUser():
     '''
         Henter brukerID basert på email til en bruker. Spør på nytt om bruker ikke finnes.
     '''
@@ -96,10 +130,10 @@ def getUserID():
 
     if not email or len(email) < 2:
         print("Ugyldig email. Prøv igjen")
-        return getUserID()
+        return getUser()
 
     userID = cursor.execute('''
-        SELECT KundeNr
+        SELECT *
         from kunde
         WHERE Epost == :email
     ''',{'email': email})
@@ -107,9 +141,9 @@ def getUserID():
 
     if not list:
         print("Ugyldig email, prøv på nytt.")
-        return getUserID()
+        return getUser()
 
-    return str(list[0][0])
+    return list[0]
 
 def ankomst_avgangstider(stasjon_navn: list):
     output = []
@@ -134,6 +168,6 @@ def ankomst_avgangstider_single(stasjon_navn:str):
     #     return ankomst_avgangstider()
     return tider
 
-fremtidige_reiser()
+main()
 
 con.commit()

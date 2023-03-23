@@ -48,18 +48,21 @@ def fremtidigeReiser():
     current_date = f"{current_time.year}-{current_time.month}-{current_time.day}"
     current_clock_time = f"{current_time.hour}:{current_time.second}"
     print(current_date)
-    print(current_time)
+    print(current_clock_time)
 
     req = cursor.execute(
         """
   SELECT *
 
-  FROM KundeOrdre as KO
+FROM Kunde
+	inner JOIN KundeOrdre on Kunde.KundeNr == KundeOrdre.KundeID
+	NATURAL JOIN (SELECT OrdreNr, TogruteID as BillettSeteTogruteID FROM BillettSete UNION SELECT OrdreNr, TogruteID as BillettKupeeTogruteID FROM BillettKupee)
     NATURAL JOIN Togrute as TR
     NATURAL JOIN TogruteForekomst as TRFK
     NATURAL JOIN StasjonerIRute as SIR
-	
-  where StasjonsNr == 1  and ( KO.KundeNr == :KundeNr) and (TRFK.Dato < :current_date)
+ 
+	WHERE
+		Ankomsttid IS NULL and Kunde.KundeNr == 10 and  (Dato > '2023-04-02' or ( Dato == '2023-04-03' or Avgangstid < '08:00'))
         """
         ,{'KundeNr': KundeNr, "current_date" :current_date, "current_clock_time": current_clock_time})
     res = req.fetchall()

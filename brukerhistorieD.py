@@ -5,11 +5,14 @@ from datetime import datetime, timedelta
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
-
+# Henter ut intput for startstasjon, sluttstasjon, dato og klokkeslett ved å kalle inputfunksjonene.
+# Finner alle togruter fra startstasjon til sluttstasjon etter klokkeslett for oppgitt dato,
+# og for alle klokkeslett dagen etter. Printer ut resultatet i terminalen. 
 def finnTogruter():
     # Spør brukeren om input for stasjonsnavn, dato og klokkeslett
     print("Vennligst fyll ut ønsket startstasjon")
     stasjoner = stasjonsInput()
+    print(stasjoner[0], stasjoner[1])
     dato = datoInput().date()
     datoDagEtter = dato + timedelta(days=1)
     print(dato, datoDagEtter)
@@ -17,11 +20,11 @@ def finnTogruter():
 
     # I SECLECT-delen settes Dato til + 1 dag hvis valgt startStasjon har avgangstid som er 
     # mindre enn avgangstiden for togruten sin startstasjon, da dette betyr at togruten går over to datoer.
-    # I WHERE-delen så sjekkes det samme som i SELECT-delen to ganger, for å se om faktisk Dato 
-    # enten er lik dato og avgangstid >= klokkeslett, eller bare lik datoDagEtter. 
-    # Videre sjekkes det for at startStasjon og sluttStasjon er riktig, i tillegg til at
-    # startStasjon sitt StasjonNr må være mindre enn sluttStasjon sitt stasjonNr 
-    # for å sjekke at togruten går riktig vei. 
+    # I WHERE-delen så sjekkes det samme som i SELECT-delen to ganger, for å se om Dato (evt oppdatert)
+    # er lik dato og avgangstid >= klokkeslett, eller bare lik datoDagEtter. 
+    # Videre sjekkes det for at startStasjon og sluttStasjon er riktig i forhold til brukerinput. 
+    # Tilsutt sjekkes det for at togruten går riktig vei, 
+    # da må startStasjon sitt StasjonNr må være mindre enn sluttStasjon sitt StasjonsNr 
     togruter = cursor.execute("""
         SELECT Tog.TogruteID, startStasjonIRute.Avgangstid, sluttStasjonIRute.Ankomsttid,
             CASE WHEN startStasjonIRute.Avgangstid < (
@@ -61,6 +64,7 @@ def finnTogruter():
 
     rows = togruter.fetchall()
 
+    # Hvis spørringen er tom finnes det ingen togruter, ellers printes resultatet
     if not rows:
         print(f'''Det finnes ingen togruter som går mellom {stasjoner[0]} og {stasjoner[1]} den {dato} etter kl {klokkeslett}, eller den {datoDagEtter}''')
     for row in rows:
@@ -70,26 +74,25 @@ con.commit()
 
 # Henter inn bruker input for start- og sluttstasjon, og validerer input'en
 def stasjonsInput():
-    startStasjonInput = input("Startstasjon: ")
-    sluttStasjonInput = input("Sluttstasjon: ")
+    while True:
+        startStasjonInput = input("Startstasjon: ")
+        sluttStasjonInput = input("Sluttstasjon: ")
 
-    # Sørge for at bruk av små og store bokstaver ikke påvirker input'en
-    startStasjon= ' '.join([x.capitalize() if len(x) > 1 else x.lower() for x in startStasjonInput.split()])
-    sluttStasjon = ' '.join([x.capitalize() if len(x) > 1 else x.lower() for x in sluttStasjonInput.split()])   
+        # Sørge for at bruk av små og store bokstaver ikke påvirker input'en
+        startStasjon= ' '.join([x.capitalize() if len(x) > 1 else x.lower() for x in startStasjonInput.split()])
+        sluttStasjon = ' '.join([x.capitalize() if len(x) > 1 else x.lower() for x in sluttStasjonInput.split()])   
 
-    # Finner alle jernbanestasjoner i databasen
-    jernbanestasjoner = cursor.execute("SELECT Navn FROM Jernbanestasjon")
-    alleStasjonsNavn = jernbanestasjoner.fetchall()
+        # Finner alle jernbanestasjoner i databasen
+        jernbanestasjoner = cursor.execute("SELECT Navn FROM Jernbanestasjon")
+        alleStasjonsNavn = jernbanestasjoner.fetchall()
 
-    # Kaller funksjonen på nytt hvis inputen er ugyldig
-    if (startStasjon and sluttStasjon)  not in [navn[0] for navn in alleStasjonsNavn]:
-        print("Ikke gyldig jernbanestasjoner, prøv igjen")
-        stasjonsInput()
-    elif startStasjon == sluttStasjon:
-        print("Kan ikke ha samme start- og sluttstasjon, prøv igjen")
-        stasjonsInput()
-
-    return [startStasjon, sluttStasjon]
+        # Kaller funksjonen på nytt hvis inputen er ugyldig
+        if (startStasjon and sluttStasjon)  not in [navn[0] for navn in alleStasjonsNavn]:
+            print("Ikke gyldig jernbanestasjoner, prøv igjen")
+        elif startStasjon == sluttStasjon:
+            print("Kan ikke ha samme start- og sluttstasjon, prøv igjen")
+        else:
+            return [startStasjon, sluttStasjon]
 
 # Henter inn bruker input for dato, og validerer input'en
 def datoInput():

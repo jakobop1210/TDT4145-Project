@@ -1,3 +1,5 @@
+import brukerhistorieD
+from datetime import datetime, timedelta
 import sqlite3
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
@@ -28,13 +30,16 @@ def finn_ledige_seter():
             )
         )
     ''', {'startstasjon': startstasjon, 'sluttstasjon': sluttstasjon, 'dato': dato}).fetchall()
+    print(response) #[('2023-04-03', 1), ('2023-04-03', 2)]
+    datoT = datetime.strptime(dato, "%Y-%m-%d").date()
+    togruter = brukerhistorieD.finnTogruterPåDato([startstasjon, sluttstasjon], datoT, '00:00')
 
     #FINN ALLE LEDIGE SETER PÅ DELETOGRUTENE (delstrekningene mellom start og sluttstasjon)
     gyldigeTogruteNrForSitte = set()
     gyldigeSeteNr = dict()
-    for togruteforekomst in response:
+    for togruteforekomst in togruter:
         print()
-        print(f"Ledige seter for togrute {togruteforekomst[1]} den {togruteforekomst[0]} fra {startstasjon} til {sluttstasjon}:") #Kanskje importe en funksjon fra en annen brukerhistorie for å finne start og sluttstasjon for togrute
+        print(f"Ledige seter for togrute {togruteforekomst[0]} den {togruteforekomst[-1]} fra {startstasjon} til {sluttstasjon}:") #Kanskje importe en funksjon fra en annen brukerhistorie for å finne start og sluttstasjon for togrute
         
         responseSeter = cursor.execute('''
             SELECT DISTINCT tr.TogruteID, sv.NrIVognOppsett, s.SeteNr
@@ -57,7 +62,7 @@ def finn_ledige_seter():
                         )
                     )
             ) 
-        ''', {'TogruteID': togruteforekomst[1], 'Dato': togruteforekomst[0], 'StartStasjon': startstasjon, 'SluttStasjon': sluttstasjon}).fetchall()
+        ''', {'TogruteID': togruteforekomst[0], 'Dato': togruteforekomst[-1], 'StartStasjon': startstasjon, 'SluttStasjon': sluttstasjon}).fetchall()
 
         #Print alle ledige setene per vogn
         antall_vogner = len(set([x[1] for x in responseSeter]))
@@ -114,8 +119,8 @@ def finn_ledige_seter():
     togrutenr = velgTogruteNr(gyldigeTogruteNrForSitte, gyldigeTogruteNrForSove, typeBillett) 
 
     cursor.execute('''
-        INSERT INTO KundeOrdre (Dag, tid, KundeID, Dato, TogruteID) VALUES (:Dato, :Tid, :KundeID, :Dato, :TogruteID)
-    ''', {'Dato': dato, 'Tid': dato, 'KundeID': kundeNr, 'TogruteID': togrutenr}).fetchall()
+        INSERT INTO KundeOrdre (Dag, tid, KundeNr, Dato, TogruteID) VALUES (:Dato, :Tid, :KundeNr, :Dato, :TogruteID)
+    ''', {'Dato': dato, 'Tid': dato, 'KundeNr': kundeNr, 'TogruteID': togrutenr}).fetchall()
     ordreID = cursor.lastrowid
 
     if (typeBillett == "1"):
@@ -183,7 +188,7 @@ def velgTogruteNr(gydligTogruteNrForSitte, gydligTogruteNrForSove, typeBillett):
             print("Velg et gyldig togrute nummer!")
             return velgTogruteNr(gydligTogruteNrForSitte, gydligTogruteNrForSove, typeBillett)
 
-def velgSitteBillett(ordreID, togrutenr, dato, gyldigeSeteNr, startstasjon, sluttstasjon):
+def velgSitteBillett(ordreID, togrutenr, dato, startstasjon, sluttstasjon):
     """
     Finner hvilken vogn og sete som brukeren vil kjøpe og lager en bestilling basert på dette
 
@@ -193,18 +198,36 @@ def velgSitteBillett(ordreID, togrutenr, dato, gyldigeSeteNr, startstasjon, slut
         gyldigeSeteNr (dict): En dictionary som inneholder hvilke seter som er ledige i hvilke vogner
     Returns:
     """
-    # billettDato = input("Velg dato for billetten: ") ###SJEKKER IKKE DENNE ENDA
     vognNr = input("Velg vogn nummer: ")
-    if int(vognNr) not in gyldigeSeteNr: #sjekker om oppgitt vogn er tilgjengelig
+    gyldigeSeteNr = cursor.execute('''
+        SELECT DISTINCT s.SeteNr
+        FROM ((Togrute AS tr INNER JOIN SitteVogn AS sv ON (tr.TogruteID = sv.TogruteID)) INNER JOIN Sete AS s ON (sv.VognID = s.VognID)) INNER JOIN Togruteforekomst AS trf ON (tr.TogruteID = trf.TogruteID)
+        WHERE tr.TogruteID = :TogruteID AND trf.Dato = :Dato AND s.SeteNr NOT IN (
+            SELECT bs.SeteNr
+            FROM BillettSete AS bs INNER JOIN Sittevogn AS sv2 ON (bs.VognID = sv2.VognID)
+            WHERE bs.Dato = :Dato AND bs.TogruteID = :TogruteID AND sv2.NrIVognOppsett = :NrIVognOppsett
+        )
+    ''', {'Dato': dato, 'TogruteID': togrutenr, 'NrIVognOppsett': vognNr}).fetchall()
+    gyldigeSeteNr = [x[0] for x in gyldigeSeteNr]
+
+    gyldigeVognNr = cursor.execute('''
+        SELECT DISTINCT sv.VognID
+        FROM ((Togrute AS tr INNER JOIN SitteVogn AS sv ON (tr.TogruteID = sv.TogruteID)) INNER JOIN Sete AS s ON (sv.VognID = s.VognID)) INNER JOIN Togruteforekomst AS trf ON (tr.TogruteID = trf.TogruteID)
+        WHERE tr.TogruteID = :TogruteID AND trf.Dato = :Dato 
+    ''', {'Dato': dato, 'TogruteID': togrutenr}).fetchall()
+    gyldigeVognNr = [x[0] for x in gyldigeVognNr]
+
+    # billettDato = input("Velg dato for billetten: ") ###SJEKKER IKKE DENNE ENDA
+    if int(vognNr) not in gyldigeVognNr: #sjekker om oppgitt vogn er tilgjengelig
         print("Velg et gyldig vogn nummer!")
-        return velgSitteBillett(ordreID, togrutenr, gyldigeSeteNr)
+        return velgSitteBillett(ordreID, togrutenr, dato, startstasjon, sluttstasjon)
     seteNr = input("Velg sete nummer: ")
-    if int(seteNr) not in gyldigeSeteNr[int(vognNr)]: #sjekker om oppgitt sete er tilgjengelig for oppgitt vogn
+    if int(seteNr) not in gyldigeSeteNr: #sjekker om oppgitt sete er tilgjengelig for oppgitt vogn
         print("Velg et gyldig sete nummer!")
-        return velgSitteBillett(ordreID, togrutenr, gyldigeSeteNr, startstasjon, sluttstasjon)
+        return velgSitteBillett(ordreID, togrutenr, dato, startstasjon, sluttstasjon)
     cursor.execute(''' 
-        INSERT INTO BillettSete (OrdreNr, Dato, TogruteID, SeteNr, VognID) VALUES (:OrdreNr, :Dato, :TogruteID, :SeteNr, :VognID)
-    ''', {'OrdreNr': ordreID, 'Dato': dato, 'TogruteID': togrutenr, 'SeteNr': seteNr, 'VognID': vognNr})
+        INSERT INTO BillettSete (OrdreNr, Dato, TogruteID, SeteNr, VognID, StartStasjon, SluttStasjon) VALUES (:OrdreNr, :Dato, :TogruteID, :SeteNr, :VognID, :StartStasjon, :SluttStasjon)
+    ''', {'OrdreNr': ordreID, 'Dato': dato, 'TogruteID': togrutenr, 'SeteNr': seteNr, 'VognID': vognNr, 'StartStasjon': startstasjon, 'SluttStasjon': sluttstasjon})
     BillettID = cursor.lastrowid
 
     delstrekninger = cursor.execute('''
@@ -270,8 +293,52 @@ def velgKupeebillett(ordreID, togrutenr, dato, kupeeDict, gyldigeKupeeNr):
         ''', {'SengeNr':1, 'OrdreNr': ordreID, 'Dato': dato, 'TogruteID': togrutenr, 'KupeeNr': kupeeNr, 'VognID': vognID})
         print("Din ordre er bestilt!")
     
-    
-    
+
+def finnTogruterPåDato(stasjoner, dato, klokkeslett):
+    # I SECLECT-delen settes Dato til + 1 dag hvis valgt startStasjon har avgangstid som er 
+    # mindre enn avgangstiden for togruten sin startstasjon, da dette betyr at togruten går over to datoer.
+    # I WHERE-delen så sjekkes det samme som i SELECT-delen to ganger, for å se om Dato (evt oppdatert)
+    # er lik dato og avgangstid >= klokkeslett, eller bare lik datoDagEtter. 
+    # Videre sjekkes det for at startStasjon og sluttStasjon er riktig i forhold til brukerinput. 
+    # Tilsutt sjekkes det for at togruten går riktig vei, 
+    # da må startStasjon sitt StasjonNr må være mindre enn sluttStasjon sitt StasjonsNr 
+    return cursor.execute("""
+        SELECT Tog.TogruteID, startStasjonIRute.Avgangstid, sluttStasjonIRute.Ankomsttid,
+            CASE WHEN startStasjonIRute.Avgangstid < (
+                SELECT StasjonerIRute.Avgangstid 
+                FROM Togrute AS Tog2 NATURAL JOIN StasjonerIRute 
+                WHERE Tog.TogruteID = Tog2.TogruteID AND StasjonerIRute.Ankomsttid IS NULL
+            )
+            THEN DATE(Dato, "+1 day")
+            ELSE Dato END AS Dato
+        FROM Togrute AS Tog NATURAL JOIN StasjonerIRute AS startStasjonIRute
+             INNER JOIN StasjonerIRute AS sluttStasjonIRute ON Tog.TogruteID = sluttStasjonIRute.TogruteID
+             INNER JOIN TogruteForekomst ON Tog.TogruteID = TogruteForekomst.TogruteID
+        WHERE 
+            ((CASE WHEN startStasjonIRute.Avgangstid < (
+                SELECT StasjonerIRute.Avgangstid 
+                FROM Togrute AS Tog2 NATURAL JOIN StasjonerIRute 
+                WHERE Tog.TogruteID = Tog2.TogruteID AND StasjonerIRute.Ankomsttid IS NULL
+            )
+            THEN DATE(Dato, "+1 day")
+            ELSE Dato END = :dato AND startStasjonIRute.Avgangstid >= :klokkeslett)
+             OR
+            (CASE WHEN startStasjonIRute.Avgangstid < (
+                SELECT StasjonerIRute.Avgangstid 
+                FROM Togrute AS Tog2 NATURAL JOIN StasjonerIRute 
+                WHERE Tog.TogruteID = Tog2.TogruteID AND StasjonerIRute.Ankomsttid IS NULL
+            )
+            THEN DATE(Dato, "+1 day")
+            ELSE Dato END = :datoDagEtter))
+            AND startStasjonIRute.JernbanestasjonNavn = :startStasjon
+            AND sluttStasjonIRute.JernbanestasjonNavn = :sluttStasjon
+		    AND startStasjonIRute.StasjonsNr < SluttStasjonIRute.StasjonsNr   
+		ORDER BY Dato, startStasjonIRute.Avgangstid
+        """, {
+            "dato": dato, "datoDagEtter": dato + timedelta(days=1), "startStasjon": stasjoner[0], 
+            "sluttStasjon": stasjoner[1], "klokkeslett": klokkeslett
+        }).fetchall()
+
 
     ####                                                                    
     #### MANGLER: VALDIERING AV INPUT, MULIGHET TIL Å KJØPE FLERE SETEBILLETTER
@@ -279,6 +346,8 @@ def velgKupeebillett(ordreID, togrutenr, dato, kupeeDict, gyldigeKupeeNr):
     # - Må kunne kjøpe 1/2 senger i kupeen
     # - kan velge billettype 2 og så togrute 1 - det burde ikke gå
     # - kan kun bestille flere setebilletter for samme togrute nummer (togruteID) - FAIR
+    # - Håndterer ikke ordentlig når man velger et sete som er reservert - FIXED
+    # - Validering av kupeebilletter er kanskje ikke helt riktig 
 
 if __name__ == "__main__":
     finn_ledige_seter()

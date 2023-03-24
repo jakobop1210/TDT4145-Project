@@ -3,12 +3,16 @@ con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
 def finn_ledige_seter():
+    """
+    Hovedfunksjon for programmet. Lar brukeren se alle ledige billetter på en dato og så kjøpe dem
+    """
 
     kundeNr = userLogin()
+    dato = input("Velg dato (YYYY-MM-DD): ")
 
-    startstasjon = "Trondheim"
+    startstasjon = "Steinkjer"
     sluttstasjon = "Bodø"
-    dato = "2023-04-03"
+    # dato = "2023-04-03"
 
     #FINN ALLE TOGRUTEFOREKOMSTENE SOM INNEHOLDER START OG SLUTTSTASJONEN OG DATOEN
     response = cursor.execute('''
@@ -25,22 +29,35 @@ def finn_ledige_seter():
         )
     ''', {'startstasjon': startstasjon, 'sluttstasjon': sluttstasjon, 'dato': dato}).fetchall()
 
-    gyldigeTogruteNr = set()
-    #FINN ALLE LEDIGE SETER PÅ DELETOGRUTENE
+    #FINN ALLE LEDIGE SETER PÅ DELETOGRUTENE (delstrekningene mellom start og sluttstasjon)
+    gyldigeTogruteNrForSitte = set()
     gyldigeSeteNr = dict()
     for togruteforekomst in response:
         print()
-        print(f"Ledige seter for togrute {togruteforekomst[1]} den {togruteforekomst[0]}:") #Kanskje importe en funksjon fra en annen brukerhistorie for å finne start og sluttstasjon for togrute
+        print(f"Ledige seter for togrute {togruteforekomst[1]} den {togruteforekomst[0]} fra {startstasjon} til {sluttstasjon}:") #Kanskje importe en funksjon fra en annen brukerhistorie for å finne start og sluttstasjon for togrute
         
         responseSeter = cursor.execute('''
             SELECT DISTINCT tr.TogruteID, sv.NrIVognOppsett, s.SeteNr
             FROM ((Togrute AS tr INNER JOIN SitteVogn AS sv ON (tr.TogruteID = sv.TogruteID)) INNER JOIN Sete AS s ON (sv.VognID = s.VognID)) INNER JOIN Togruteforekomst AS trf ON (tr.TogruteID = trf.TogruteID)
             WHERE trf.Dato = :Dato AND tr.TogruteID = :TogruteID AND (SeteNr, s.VognID) NOT IN (
-                SELECT bs.SeteNr, bs.VognID
-                FROM BillettSete AS bs
-                WHERE bs.TogruteID = :TogruteID AND bs.Dato = :Dato AND OrdreNr IS NOT NULL
+                SELECT DISTINCT bs.SeteNr, bs.VognID
+                FROM BillettSete AS bs INNER JOIN DelstrekningForSete AS dfs ON (bs.BillettID = dfs.BillettID)
+                WHERE bs.TogruteID = :TogruteID AND bs.Dato = :Dato AND OrdreNr IS NOT NULL AND dfs.DelstrekningsID IN ( 
+                        SELECT ds1.DelstrekningsID
+                        FROM Delstrekning as ds1
+                        WHERE ds1.DelstrekningsID >=  (
+                            SELECT ds.DelstrekningsID
+                            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
+                            WHERE tr.TogruteID = :TogruteID AND ds.StartStasjon = :StartStasjon
+                        )
+                        AND DelstrekningsID <= (
+                            SELECT DelstrekningsID
+                            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
+                            WHERE tr.TogruteID = :TogruteID AND ds.SluttStasjon = :SluttStasjon
+                        )
+                    )
             ) 
-        ''', {'TogruteID': togruteforekomst[1], 'Dato': togruteforekomst[0]}).fetchall()
+        ''', {'TogruteID': togruteforekomst[1], 'Dato': togruteforekomst[0], 'StartStasjon': startstasjon, 'SluttStasjon': sluttstasjon}).fetchall()
 
         #Print alle ledige setene per vogn
         antall_vogner = len(set([x[1] for x in responseSeter]))
@@ -48,18 +65,19 @@ def finn_ledige_seter():
             ledige_seter_i_vogn = []
             for sete in responseSeter:
                 if int(sete[1]) == vognIdx:
-                    gyldigeTogruteNr.add(sete[0])
+                    gyldigeTogruteNrForSitte.add(sete[0])
                     gyldigeSeteNr[vognIdx] = gyldigeSeteNr[vognIdx] + [sete[-1]] if vognIdx in gyldigeSeteNr else [sete[-1]]
                     ledige_seter_i_vogn.append(str(sete[-1]))
             responsStreng = f"Ledige seter i vogn {vognIdx}: {', '.join(ledige_seter_i_vogn)}" if len(ledige_seter_i_vogn) > 0 else "Ingen ledige seter"
             print(responsStreng)
 
     #FINN ALLE LEDIGE KUPEER PÅ DELETOGRUTENE
+    gyldigeTogruteNrForSove = set()
     gyldigeKupeeNr = dict()
     kupeeDict = {}
     for togruteforekomst in response:
         print()
-        print(f"Ledige kupeer for togrute {togruteforekomst[1]} den {togruteforekomst[0]}:")
+        print(f"Ledige kupeer for togrute {togruteforekomst[1]} den {togruteforekomst[0]} fra {startstasjon} til {sluttstasjon}:")
         responseKupeer = cursor.execute('''
             SELECT DISTINCT sv.NrIVognOppsett, k.KupeeNr, sv.VognID
             FROM ((Togrute AS tr INNER JOIN SoveVogn AS sv ON (tr.TogruteID = sv.TogruteID)) INNER JOIN Kupee AS k ON (sv.VognID = k.VognID)) INNER JOIN Togruteforekomst AS trf ON (tr.TogruteID = trf.TogruteID)
@@ -82,7 +100,7 @@ def finn_ledige_seter():
                     kupeeDict[kupeeKey] = kupee[-1]
                 if int(kupee[0] == ekteVognIdx):
                     harLedig = True
-                    gyldigeTogruteNr.add(togruteforekomst[1])
+                    gyldigeTogruteNrForSove.add(togruteforekomst[1])
                     gyldigeKupeeNr[ekteVognIdx] = gyldigeKupeeNr[ekteVognIdx] + [kupee[-2]] if ekteVognIdx in gyldigeKupeeNr else [kupee[-2]]
                     ledige_seter_i_vogn.append(str(kupee[1]))
         responsStreng = f"Ledige kupeer i vogn {ekteVognIdx}: {', '.join(ledige_seter_i_vogn)}" if harLedig > 0 else "Ingen ledige kupeer"
@@ -93,7 +111,7 @@ def finn_ledige_seter():
     typeBillett = velgTypeBillett() 
 
     print("Vennligst velg hvilken billett du vil kjøpe:")
-    togrutenr = velgTogruteNr(gyldigeTogruteNr) 
+    togrutenr = velgTogruteNr(gyldigeTogruteNrForSitte, gyldigeTogruteNrForSove, typeBillett) 
 
     cursor.execute('''
         INSERT INTO KundeOrdre (Dag, tid, KundeID, Dato, TogruteID) VALUES (:Dato, :Tid, :KundeID, :Dato, :TogruteID)
@@ -102,11 +120,11 @@ def finn_ledige_seter():
 
     if (typeBillett == "1"):
         while True:
-            velgSitteBillett(ordreID, togrutenr, gyldigeSeteNr)
+            velgSitteBillett(ordreID, togrutenr, dato, gyldigeSeteNr, startstasjon, sluttstasjon)
             if (input(f"Vil du kjøpe flere sittebilletter for togrute {togrutenr}? (j/n): ").lower() == "n"):
                 break
     elif (typeBillett == "2"):
-        velgKupeebillett(ordreID, togrutenr, kupeeDict, gyldigeKupeeNr)
+        velgKupeebillett(ordreID, togrutenr, dato, kupeeDict, gyldigeKupeeNr)
     else:
         print("Du valgte ikke en gyldig type billett!")
 
@@ -140,23 +158,32 @@ def velgTypeBillett():
         print("Du valgte ikke en gyldig type billett!")
         return velgTypeBillett()
 
-def velgTogruteNr(gydligTogruteNr):
+def velgTogruteNr(gydligTogruteNrForSitte, gydligTogruteNrForSove, typeBillett):
     """
     Validerer at brukeren velger et gyldig togrute nummer
 
     Parameters:
-        gydligTogruteNr (list): En liste med gyldige togrute nummer
+        gydligTogruteNrForSitte (list): En liste med gyldige togrute nummer for sittevogner
+        gydligTogruteNrForSove (list): En liste med gyldige togrute nummer for kupeevogner
+        typeBillett (int): Type billett brukeren valgte
     Returns:
         togruteNr (int): Togrute nummeret brukeren valgte
     """
     togruteNr = input("Velg et togrute nummer: ")
-    if int(togruteNr) in list(gydligTogruteNr):
-        return togruteNr
+    if typeBillett == "1":
+        if int(togruteNr) in list(gydligTogruteNrForSitte):
+            return togruteNr
+        else:
+            print("Velg et gyldig togrute nummer!")
+            return velgTogruteNr(gydligTogruteNrForSitte, gydligTogruteNrForSove, typeBillett)
     else:
-        print("Velg et gyldig togrute nummer!")
-        return velgTogruteNr(gydligTogruteNr)
+        if int(togruteNr) in list(gydligTogruteNrForSove):
+            return togruteNr
+        else:
+            print("Velg et gyldig togrute nummer!")
+            return velgTogruteNr(gydligTogruteNrForSitte, gydligTogruteNrForSove, typeBillett)
 
-def velgSitteBillett(ordreID, togrutenr, gyldigeSeteNr):
+def velgSitteBillett(ordreID, togrutenr, dato, gyldigeSeteNr, startstasjon, sluttstasjon):
     """
     Finner hvilken vogn og sete som brukeren vil kjøpe og lager en bestilling basert på dette
 
@@ -166,7 +193,7 @@ def velgSitteBillett(ordreID, togrutenr, gyldigeSeteNr):
         gyldigeSeteNr (dict): En dictionary som inneholder hvilke seter som er ledige i hvilke vogner
     Returns:
     """
-    billettDato = input("Velg dato for billetten: ") ###SJEKKER IKKE DENNE ENDA
+    # billettDato = input("Velg dato for billetten: ") ###SJEKKER IKKE DENNE ENDA
     vognNr = input("Velg vogn nummer: ")
     if int(vognNr) not in gyldigeSeteNr: #sjekker om oppgitt vogn er tilgjengelig
         print("Velg et gyldig vogn nummer!")
@@ -174,15 +201,36 @@ def velgSitteBillett(ordreID, togrutenr, gyldigeSeteNr):
     seteNr = input("Velg sete nummer: ")
     if int(seteNr) not in gyldigeSeteNr[int(vognNr)]: #sjekker om oppgitt sete er tilgjengelig for oppgitt vogn
         print("Velg et gyldig sete nummer!")
-        return velgSitteBillett(ordreID, togrutenr, gyldigeSeteNr)
+        return velgSitteBillett(ordreID, togrutenr, gyldigeSeteNr, startstasjon, sluttstasjon)
     cursor.execute(''' 
         INSERT INTO BillettSete (OrdreNr, Dato, TogruteID, SeteNr, VognID) VALUES (:OrdreNr, :Dato, :TogruteID, :SeteNr, :VognID)
-    ''', {'OrdreNr': ordreID, 'Dato': billettDato, 'TogruteID': togrutenr, 'SeteNr': seteNr, 'VognID': vognNr})
+    ''', {'OrdreNr': ordreID, 'Dato': dato, 'TogruteID': togrutenr, 'SeteNr': seteNr, 'VognID': vognNr})
+    BillettID = cursor.lastrowid
 
-    print("Din ordre er bestilt!")
-            
+    delstrekninger = cursor.execute('''
+        SELECT DelstrekningsID
+        FROM Delstrekning
+        WHERE DelstrekningsID >=  (
+            SELECT DelstrekningsID
+            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
+            WHERE tr.TogruteID = :TogruteID AND ds.StartStasjon = :startStasjon
+            )
+        AND DelstrekningsID <= (
+            SELECT DelstrekningsID
+            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
+            WHERE tr.TogruteID = :TogruteID AND ds.SluttStasjon = :sluttStasjon
+            )
+    ''', {'TogruteID': togrutenr, 'startStasjon': startstasjon, 'sluttStasjon': sluttstasjon}).fetchall()
 
-def velgKupeebillett(ordreID, togrutenr, kupeeDict, gyldigeKupeeNr):
+    for delstrekning in delstrekninger:
+        cursor.execute('''
+            INSERT INTO DelstrekningForSete(BillettID, DelstrekningsID) VALUES (:BillettID, :DelstrekningsID)
+        ''', {'BillettID': BillettID, 'DelstrekningsID': delstrekning[0]})
+
+    print("Sete bestilt!")
+
+
+def velgKupeebillett(ordreID, togrutenr, dato, kupeeDict, gyldigeKupeeNr):
     """
     Finner hvilken vogn og kupee som brukeren vil kjøpe og lager en bestilling basert på det.
 
@@ -193,35 +241,35 @@ def velgKupeebillett(ordreID, togrutenr, kupeeDict, gyldigeKupeeNr):
         gyldigeKupeeNr (dict): En dictionary som inneholder hvilke kupéer som er ledige i hver vogn
     Returns:
     """
-    billettDato = input("Velg dato for billetten: ")
+    # billettDato = input("Velg dato for billetten: ")
     vognNr = input("Velg vogn nummer: ")
     if int(vognNr) not in gyldigeKupeeNr: #Sjekker om vognnummeret er lik en av nummerene til vognene som er sovevogner
         print("Velg et gyldig vogn nummer!")
-        return velgKupeebillett(ordreID, togrutenr, kupeeDict, gyldigeKupeeNr)
+        return velgKupeebillett(ordreID, togrutenr, dato, kupeeDict, gyldigeKupeeNr)
     kupeeNr = input("Velg kupée nummer: ")
     if int(kupeeNr) not in gyldigeKupeeNr[int(vognNr)]: #Sjekker om kupéenummeret er gyldig for den valgte vognen
         print("Velg et gyldig kupée nummer!")
-        return velgKupeebillett(ordreID, togrutenr, kupeeDict, gyldigeKupeeNr)
+        return velgKupeebillett(ordreID, togrutenr, dato, kupeeDict, gyldigeKupeeNr)
     antallSenger = input("Hvor mange senger vil du ha? ")
-    vognID = kupeeDict[str(billettDato) + str(togrutenr) + str(vognNr)]
+    vognID = kupeeDict[str(dato) + str(togrutenr) + str(vognNr)]
 
     #Sjekker om kunden bestiller en eller to senger i en kupée
     if antallSenger == 2:
         cursor.execute(''' 
             INSERT INTO BillettKupee (SengeNr, OrdreNr, Dato, TogruteID, KupeeNr, VognID) VALUES (1, :OrdreNr, :Dato, :TogruteID, :KupeeNr, :VognID);
-        ''', {'OrdreNr': ordreID, 'Dato': billettDato, 'TogruteID': togrutenr, 'KupeeNr': kupeeNr, 'VognID': vognID})
+        ''', {'OrdreNr': ordreID, 'Dato': dato, 'TogruteID': togrutenr, 'KupeeNr': kupeeNr, 'VognID': vognID})
         con.commit()
         cursor.execute(''' 
             INSERT INTO BillettKupee (SengeNr, OrdreNr, Dato, TogruteID, KupeeNr, VognID) VALUES (2, :OrdreNr, :Dato, :TogruteID, :KupeeNr, :VognID);
-        ''', {'OrdreNr': ordreID, 'Dato': billettDato, 'TogruteID': togrutenr, 'KupeeNr': kupeeNr, 'VognID': vognID})
+        ''', {'OrdreNr': ordreID, 'Dato': dato, 'TogruteID': togrutenr, 'KupeeNr': kupeeNr, 'VognID': vognID})
         con.commit()
         print("Din ordre er bestilt!")
     else:
         cursor.execute(''' 
             INSERT INTO BillettKupee (SengeNr, OrdreNr, Dato, TogruteID, KupeeNr, VognID) VALUES (:SengeNr, :OrdreNr, :Dato, :TogruteID, :KupeeNr, :VognID)
-        ''', {'SengeNr':1, 'OrdreNr': ordreID, 'Dato': billettDato, 'TogruteID': togrutenr, 'KupeeNr': kupeeNr, 'VognID': vognID})
+        ''', {'SengeNr':1, 'OrdreNr': ordreID, 'Dato': dato, 'TogruteID': togrutenr, 'KupeeNr': kupeeNr, 'VognID': vognID})
         print("Din ordre er bestilt!")
-        
+    
     
     
 
@@ -230,8 +278,9 @@ def velgKupeebillett(ordreID, togrutenr, kupeeDict, gyldigeKupeeNr):
     ####                                                                       
     # - Må kunne kjøpe 1/2 senger i kupeen
     # - kan velge billettype 2 og så togrute 1 - det burde ikke gå
-    # - kan kun bestille flere setebilletter for samme togrute nummer (togruteID)
+    # - kan kun bestille flere setebilletter for samme togrute nummer (togruteID) - FAIR
 
-finn_ledige_seter()
+if __name__ == "__main__":
+    finn_ledige_seter()
 
 con.commit()

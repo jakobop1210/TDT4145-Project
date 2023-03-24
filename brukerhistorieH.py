@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+import hjelpefunksjoner
 from datetime import datetime, timedelta
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
@@ -27,28 +28,10 @@ def find_time():
    
 
     return current_date, current_clock_time
-
-def datoInput():
-    dato = input("Dato (for.eks 2023-04-03): \n\n")
-    try:
-        dato = datetime.strptime(dato, "%Y-%m-%d")
-        return dato
-    except:
-        print("Ikke gyldig dato, prøv igjen")
-        return datoInput()
-
-def tidspunktInput():
-    tidspunkt = input("Tidspunkt (for.eks 12:30): \n\n")
-    try:
-        tidspunkt = datetime.strptime(tidspunkt, "%H:%M")
-        return tidspunkt
-    except:
-        print("Ikke gyldig tidspunkt, prøv igjen")
-        return tidspunktInput()
     
 def user_time():
-    date = datoInput().date()
-    time = str(tidspunktInput().time())[:-3]
+    date = hjelpefunksjoner.datoInput().date()
+    time = str(hjelpefunksjoner.tidspunktInput().time())[:-3]
     return date, time
 
 def main():
@@ -78,7 +61,7 @@ def fremtidige_reiser(brukerID:str):
 	StartStasjon,
 	SluttStasjon,
 	StasjonerIRute.Avgangstid
-FROM
+    FROM
 	Kunde
 	INNER JOIN KundeOrdre ON Kunde.KundeNr == KundeOrdre.KundeID
 	INNER JOIN (

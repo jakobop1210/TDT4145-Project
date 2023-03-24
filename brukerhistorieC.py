@@ -7,11 +7,11 @@ cursor = con.cursor()
 hverdager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"]
 alleDager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
 
-for i in hverdager:
-   cursor.execute(f'''INSERT INTO Ukedager VALUES (1, '{i}')''')
-   cursor.execute(f'''INSERT INTO Ukedager VALUES (3, '{i}')''')
-for i in alleDager:
-   cursor.execute(f'''INSERT INTO Ukedager VALUES (2, '{i}')''')
+# for i in hverdager:
+#    cursor.execute(f'''INSERT INTO Ukedager VALUES (1, '{i}')''')
+#    cursor.execute(f'''INSERT INTO Ukedager VALUES (3, '{i}')''')
+# for i in alleDager:
+#    cursor.execute(f'''INSERT INTO Ukedager VALUES (2, '{i}')''')
 
 # Henter ut intput for jernbanestasjon og ukedag ved å kalle inputfunksjonene.
 # Finner alle togruter som går innom oppgitt stasjon på oppgitt ukedag.

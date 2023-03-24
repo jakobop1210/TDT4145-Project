@@ -70,47 +70,38 @@ def fremtidige_reiser(brukerID:str):
 
     res = cursor.execute(
         '''
-        SELECT
-	Kunde.Navn,
-	KundeOrdre.OrdreNr,
-	BillettDato,
-	BillettTogruteID,
-	StartStasjon,
-	SluttStasjon,
-	StasjonerIRute.Avgangstid
+        SELECT Kunde.Navn, KundeOrdre.OrdreNr, BillettDato, 
+        BillettTogruteID, StartStasjon, SluttStasjon, 
+        StasjonerIRute.Avgangstid
 FROM
 	Kunde
 	INNER JOIN KundeOrdre ON Kunde.KundeNr == KundeOrdre.KundeID
 	INNER JOIN (
 		SELECT
-			OrdreNr AS AlleOrderer,
-			TogruteID AS BillettTogruteID,
-			Dato AS BillettDato,
-			StartStasjon,
-			SluttStasjon
+			OrdreNr AS AlleOrderer,TogruteID AS BillettTogruteID,Dato AS BillettDato,StartStasjon,SluttStasjon
 		FROM
 			BillettSete
 	UNION
-	SELECT
-		OrdreNr AS AlleOrderer,
-		TogruteID AS BillettTogruteID,
-		Dato AS BillettDato,
-		StartStasjon,
-		SluttStasjon
-	FROM
-		BillettKupee) 
+	  SELECT
+		  OrdreNr AS AlleOrderer,TogruteID AS BillettTogruteID,Dato AS BillettDato,StartStasjon,SluttStasjon
+	  FROM
+		  BillettKupee) 
 		
 		ON KundeOrdre.OrdreNr == AlleOrderer
 		
-		INNER JOIN TogruteForekomst on (BillettDato == TogruteForekomst.Dato and BillettTogruteID == TogruteForekomst.TogruteID)
+		INNER JOIN TogruteForekomst on 
+      (BillettDato == TogruteForekomst.Dato and BillettTogruteID == TogruteForekomst.TogruteID)
 		
-		INNER JOIN Togrute ON TogruteForekomst.TogruteID == Togrute.TogruteID
+		INNER JOIN Togrute ON 
+      TogruteForekomst.TogruteID == Togrute.TogruteID
 		
-		INNER JOIN StasjonerIRute on (StasjonerIRute.TogruteID == Togrute.TogruteID and  StasjonerIRute.JernbanestasjonNavn == StartStasjon)
+		INNER JOIN StasjonerIRute on 
+      (StasjonerIRute.TogruteID == Togrute.TogruteID and  StasjonerIRute.JernbanestasjonNavn == StartStasjon)
 		
-		WHERE Kunde.KundeNr == :brukerID and (BillettDato > :current_date or (BillettDato == :current_date and StasjonerIRute.Avgangstid > :current_clock_time))
-		'''
-    ,{'brukerID': brukerID, 'current_date': current_date, 'current_clock_time': current_clock_time})
+		WHERE Kunde.KundeNr == :brukerID and 
+      (BillettDato > :current_date or (BillettDato == :current_date and StasjonerIRute.Avgangstid > :current_clock_time))
+		
+    ''',{'brukerID': brukerID, 'current_date': current_date, 'current_clock_time': current_clock_time})
     allTickets = res.fetchall()
 
     output_string = ""

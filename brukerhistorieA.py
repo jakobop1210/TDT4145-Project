@@ -3,8 +3,6 @@ import sqlite3
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
-# Brukerhistorie A
-
 # Legge inn jernbanestasjoner for Nordlandsbanen
 cursor.execute('''INSERT INTO Jernbanestasjon VALUES ("Trondheim", 5.1)''')
 cursor.execute('''INSERT INTO Jernbanestasjon VALUES ("Steinkjer", 3.6)''')

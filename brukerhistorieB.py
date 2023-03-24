@@ -3,13 +3,10 @@ import sqlite3
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
-
-# Brukerhistorie B
-
-# Opprette operatør
+# Legge inn operatør SJ
 cursor.execute('''INSERT INTO Operatør VALUES ("SJ")''')
 
-# Opprette togrute
+# Legge inn togruter i databasen
 cursor.execute('''INSERT INTO Togrute VALUES (1, 1, "SJ")''')
 cursor.execute('''INSERT INTO Togrute VALUES (2, 1, "SJ")''')
 cursor.execute('''INSERT INTO Togrute VALUES (3, 0, "SJ")''')
@@ -20,6 +17,7 @@ cursor.execute('''INSERT INTO Sittevogn VALUES (2, " SJ-sittevogn-1", 2, 3, 4, "
 cursor.execute('''INSERT INTO Sittevogn VALUES (3, " SJ-sittevogn-1", 1, 3, 4, "SJ", 2)''')
 cursor.execute('''INSERT INTO Sittevogn VALUES (4, " SJ-sittevogn-1", 1, 3, 4, "SJ", 3)''')
 
+# Legge inn sete 1 til sete 12 i hver vogn
 for vognID in range(1, 5):
     for seteNr in range(1, 13):
         cursor.execute(f'''INSERT INTO Sete VALUES ({seteNr}, {vognID})''')
@@ -31,7 +29,9 @@ cursor.execute('''INSERT INTO Kupee VALUES (2, 5)''')
 cursor.execute('''INSERT INTO Kupee VALUES (3, 5)''')
 cursor.execute('''INSERT INTO Kupee VALUES (4, 5)''')
 
-# Opprette togrutetabell StasjonerIRute
+
+# Opprette togrutetabell StasjonerIRute. Antar at ankomsttid er 5 min før oppgitt klokkeslett i oppgaven,
+# og at avgangstid er oppgitt tid. For siste stasjon antar vi at ankomsttid er oppgitt tid. 
 
 # Togrute 1
 cursor.execute('''INSERT INTO StasjonerIRute VALUES ("Trondheim", 1, NULL, "07:49", 1)''')

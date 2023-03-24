@@ -1,8 +1,7 @@
 import sqlite3
+import hjelpefunksjoner
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
-
-# Brukerhistorie C
 
 # Legge inn data i  Ukedager-tabellen
 #hverdager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"]
@@ -14,11 +13,13 @@ alleDager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Sø
 # for i in alleDager:
 #    cursor.execute(f'''INSERT INTO Ukedager VALUES (2, '{i}')''')
 
+# Henter ut intput for jernbanestasjon og ukedag ved å kalle inputfunksjonene.
+# Finner alle togruter som går innom oppgitt stasjon på oppgitt ukedag.
+# Viktig å sjekke om togruten går over to ukedager. Printer ut resultatet i terminalen. 
 def finnTogruterInnomStasjon():
-    # Spør brukeren om input for stasjonsnavn og ukedag
     print("Vennligst fyll ut ønsket stasjon")
-    stasjon = stasjonsInput()
-    ukedag = ukedagInput()
+    stasjon = hjelpefunksjoner.stasjonsInput()
+    ukedag = hjelpefunksjoner.ukedagInput()
 
     # I WHERE-delen sjekkes det for om valgt stasjon sin ankomsttid er mindre enn togruten sin avgangstid, 
     # isåfall går toget innom den stasjonen dagen etter, og Ukedag må endres til neste dag. 
@@ -80,32 +81,7 @@ def finnTogruterInnomStasjon():
                 print(
                     f'''Togrute nr {row[0]} fra {row[2]} til {row[3]} kjører innom {stasjon} på {ukedag}er kl {avgangstid}.''')
 
-# Henter inn bruker input for jernbanestasjon, og validrer input'en
-def stasjonsInput():
-    while True:
-        stasjonInput = input("Jernbanestasjon: ")
-        # Sørge for at bruk av små og store bokstaver ikke påvirker input'en
-        stasjon = ' '.join([delNavn.capitalize() if len(delNavn) > 1 else delNavn.lower() for delNavn in stasjonInput.split()])
-
-        # Finner alle jernbanestasjoner i databasen
-        jernbanestasjoner = cursor.execute("SELECT Navn FROM Jernbanestasjon")
-        alleStasjonsNavn = jernbanestasjoner.fetchall()
-
-        # Kaller funksjonen på nytt hvis inputen er ugyldig
-        if stasjon not in [navn[0] for navn in alleStasjonsNavn]:
-            print("Ikke gyldig jernbanestasjon, prøv igjen")
-        else:
-            return stasjon
-
-# Henter inn bruker input for ukedag, og validrer input'en
-def ukedagInput():
-    ukedag = input("Ukedag: ").capitalize()
-    if ukedag not in alleDager:
-        print("Ikke gyldig ukedag, prøv igjen")
-        ukedagInput()
-    return ukedag
-
-
+ 
 finnTogruterInnomStasjon()
 
 con.commit()

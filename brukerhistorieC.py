@@ -4,14 +4,14 @@ con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
 # Legge inn data i  Ukedager-tabellen
-#hverdager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"]
+hverdager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"]
 alleDager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
 
-# for i in hverdager:
-#    cursor.execute(f'''INSERT INTO Ukedager VALUES (1, '{i}')''')
-#    cursor.execute(f'''INSERT INTO Ukedager VALUES (3, '{i}')''')
-# for i in alleDager:
-#    cursor.execute(f'''INSERT INTO Ukedager VALUES (2, '{i}')''')
+for i in hverdager:
+   cursor.execute(f'''INSERT INTO Ukedager VALUES (1, '{i}')''')
+   cursor.execute(f'''INSERT INTO Ukedager VALUES (3, '{i}')''')
+for i in alleDager:
+   cursor.execute(f'''INSERT INTO Ukedager VALUES (2, '{i}')''')
 
 # Henter ut intput for jernbanestasjon og ukedag ved å kalle inputfunksjonene.
 # Finner alle togruter som går innom oppgitt stasjon på oppgitt ukedag.
@@ -81,7 +81,7 @@ def finnTogruterInnomStasjon():
                 print(
                     f'''Togrute nr {row[0]} fra {row[2]} til {row[3]} kjører innom {stasjon} på {ukedag}er kl {avgangstid}.''')
 
- 
-finnTogruterInnomStasjon()
+if __name__ == "__main__":
+    finnTogruterInnomStasjon()
 
 con.commit()

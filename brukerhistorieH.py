@@ -1,11 +1,19 @@
 import sqlite3
 import datetime
 import hjelpefunksjoner
-from datetime import datetime, timedelta
+from datetime import datetime
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
 def find_time():
+    '''
+    Funksjon som finner tidspunktet nå, og returnerer det i en streng
+    
+    Returns
+        current_date (str): Datoen nå
+        current_clock_time (str): Tidspunktet nå
+    '''
+
     current_time = datetime.now()
     hour = current_time.hour
     minute = current_time.minute
@@ -24,22 +32,39 @@ def find_time():
 
     current_date = f"{current_time.year}-{month}-{day}"
     current_clock_time = f"{hour}:{minute}"
-
-   
-
     return current_date, current_clock_time
     
 def user_time():
+    '''
+    Funksjon som lar brukeren velge tidspunktet de vil se fremtidige reiser fra
+    
+    Returns 
+        date (str): Datoen brukeren har valgt
+        time (str): Tidspunktet brukeren har valgt
+    '''
+
     date = hjelpefunksjoner.datoInput().date()
-    time = str(hjelpefunksjoner.tidspunktInput().time())[:-3]
+    time = str(hjelpefunksjoner.klokkeslettInput())
+    print(date, time)
     return date, time
 
 def main():
+    '''
+    Hovedfunksjonen som kjører hele programmet
+    '''
+    print("Velkommen til Jernbanesystemet\n")
     bruker = getUser()
     print(f"Velkommen {bruker[1]}\n\n Epost: {bruker[2]}, Telefon: {bruker[3]}, BrukerID: {bruker[0]}\n")
     fremtidige_reiser(bruker[0])
     
 def fremtidige_reiser(brukerID:str):
+    '''
+    Finner fremtidige reiser for en bruker. 
+    Finner først alle reiser som brukeren har bestilt, og deretter filtrerer den ut de som har vært.
+
+    Parameters
+        brukerID (str): BrukerID til brukeren som skal finne fremtidige reiser
+    '''
     own_time_or_date = input("Vil du se fremtidige reiser basert på tidspunktet nå, eller et spesifikt tidspunkt? (nå[n]/egendefinert[e]): \n\n")
     if own_time_or_date.lower() == "e":
         current_date, current_clock_time = user_time()
@@ -98,11 +123,14 @@ def fremtidige_reiser(brukerID:str):
 def getUser():
     '''
         Henter brukerID basert på email til en bruker. Spør på nytt om bruker ikke finnes.
+
+        Returns:
+            user (list): En liste med brukerens informasjon
     '''
     email = input("Skriv in email('ctrl + c' to quit): ")
 
-    if not email or len(email) < 2:
-        print("Ugyldig email. Prøv igjen")
+    if not email:
+        print("Du kan ikke skrive inn en tom streng. Prøv igjen.")
         return getUser()
 
     userID = cursor.execute('''
@@ -113,34 +141,13 @@ def getUser():
     list = userID.fetchall()
 
     if not list:
-        print("Ugyldig email, prøv på nytt.")
+        print("Ugyldig email. Prøv igjen.")
         return getUser()
 
     return list[0]
 
-def ankomst_avgangstider(stasjon_navn: list):
-    output = []
-    for stasjon in stasjon_navn:
-        output.append(ankomst_avgangstider_single(stasjon))
-    return output
-
-def ankomst_avgangstider_single(stasjon_navn:str):
-    capitalized_navn = stasjon_navn.capitalize()
-    response = cursor.execute('''
-        SELECT Ankomsttid, Avgangstid, JernbanestasjonNavn
-        FROM Togrute inner JOIN StasjonerIRute on Togrute.TogruteID == StasjonerIRute.TogruteID
-        WHERE
-	JernbanestasjonNavn == :stasjon_navn
-    ''',{'stasjon_navn': capitalized_navn})
-    tider = response.fetchall()
-
-    # print(tider)
-
-    # if not tider:
-    #     print("Ugyldig stasjon, prøv på nytt.")
-    #     return ankomst_avgangstider()
-    return tider
-
 main()
+# find_time()
+# user_time()
 
 con.commit()

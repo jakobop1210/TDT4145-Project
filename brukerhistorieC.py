@@ -1,5 +1,6 @@
 import sqlite3
 import hjelpefunksjoner
+
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
@@ -7,16 +8,17 @@ cursor = con.cursor()
 hverdager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"]
 alleDager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
 
-for i in hverdager:
-   cursor.execute(f'''INSERT INTO Ukedager VALUES (1, '{i}')''')
-   cursor.execute(f'''INSERT INTO Ukedager VALUES (3, '{i}')''')
-for i in alleDager:
-   cursor.execute(f'''INSERT INTO Ukedager VALUES (2, '{i}')''')
-
-# Henter ut intput for jernbanestasjon og ukedag ved å kalle inputfunksjonene.
-# Finner alle togruter som går innom oppgitt stasjon på oppgitt ukedag.
-# Viktig å sjekke om togruten går over to ukedager. Printer ut resultatet i terminalen. 
+#for i in hverdager:
+#   cursor.execute(f'''INSERT INTO Ukedager VALUES (1, '{i}')''')
+#   cursor.execute(f'''INSERT INTO Ukedager VALUES (3, '{i}')''')
+#for i in alleDager:
+#   cursor.execute(f'''INSERT INTO Ukedager VALUES (2, '{i}')''')
+ 
 def finnTogruterInnomStasjon():
+    """
+    Henter ut intput for jernbanestasjon og ukedag ved å kalle inputfunksjonene, 
+    finner deretter alle togruter som går innom oppgitt stasjon på oppgitt ukedag.
+    """
     print("Vennligst fyll ut ønsket stasjon")
     stasjon = hjelpefunksjoner.stasjonsInput()
     ukedag = hjelpefunksjoner.ukedagInput()
@@ -64,7 +66,6 @@ def finnTogruterInnomStasjon():
     if not rows:
         print("Ingen togruter går innom denne stasjonen på denne ukedagen")
     else:
-        # Looper gjennom alle TogruteID'er fra spørringen over
         for row in rows:
             # Hvis oppgitt stasjon er siste stasjon i ruten
             if (stasjon == row[3]):

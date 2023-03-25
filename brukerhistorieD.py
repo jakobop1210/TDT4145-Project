@@ -1,4 +1,3 @@
-import re
 import sqlite3
 import hjelpefunksjoner
 from datetime import datetime, timedelta

@@ -1,5 +1,5 @@
 
-import datetime
+from datetime import datetime
 import re
 from sqlite3 import Cursor
 import sqlite3
@@ -56,11 +56,11 @@ def datoInput():
     dato = input("Dato (for.eks 2023-04-20): ")
     try:
         dato = datetime.strptime(dato, "%Y-%m-%d")
-        print(dato)
         return dato
     except:
         print("Ikke gyldig dato, prøv igjen")
         return datoInput()
+
 
 # Henter inn bruker input for ukedag, og validrerer input'en
 def ukedagInput():

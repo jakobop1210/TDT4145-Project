@@ -7,10 +7,10 @@ cursor = con.cursor()
 cursor.execute('''INSERT INTO Operatør VALUES ("SJ")''')
 
 # Legge inn togruter i databasen
-#cursor.execute('''INSERT INTO Togrute VALUES 
-#    (1, 1, "SJ"),
-#    (2, 1, "SJ"),
-#    (3, 0, "SJ")''')
+cursor.execute('''INSERT INTO Togrute VALUES 
+    (1, 1, "SJ"),
+    (2, 1, "SJ"),
+    (3, 0, "SJ")''')
 
 # Opprette sittevogn og seter
 cursor.execute('''INSERT INTO Sittevogn(Navn, NrIVognOppsett, AntallRader, SeterPerRad, OperatørNavn, TogruteID) VALUES 

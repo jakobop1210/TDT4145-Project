@@ -3,7 +3,6 @@ import sqlite3
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
-# Legge inn 
 # Opprette TogruteForekomst for 3 og 4 april 2023
 cursor.execute('''INSERT INTO Togruteforekomst VALUES 
     ('2023-04-03', 1),

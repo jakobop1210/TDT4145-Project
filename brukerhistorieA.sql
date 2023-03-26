@@ -8,12 +8,12 @@ INSERT INTO Jernbanestasjon VALUES
     ('Bodø', 4.1);
 
 -- Legge inn delstrekninger for Nordlandsbanen
-INSERT INTO Delstrekning(Sportype, Lengde, StartStasjon, SluttStasjon) VALUES 
-    (1, 120, 'Trondheim', 'Steinkjer'),
-    (0, 280, 'Steinkjer', 'Mosjøen'),
-    (0, 90, 'Mosjøen', 'Mo i Rana'),
-    (0, 170, 'Mo i Rana', 'Fauske'),
-    (0, 60, 'Fauske', 'Bodø');
+INSERT INTO Delstrekning VALUES 
+    (1, 1, 120, 'Trondheim', 'Steinkjer'),
+    (2, 0, 280, 'Steinkjer', 'Mosjøen'),
+    (3, 0, 90, 'Mosjøen', 'Mo i Rana'),
+    (4, 0, 170, 'Mo i Rana', 'Fauske'),
+    (5, 0, 60, 'Fauske', 'Bodø');
 
 -- Opprette Nordlandsbanen
 INSERT INTO Banestrekning VALUES ('Nordlandsbanen', 'Diesel', 6, 'Trondheim', 'Bodø');

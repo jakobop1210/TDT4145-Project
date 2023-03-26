@@ -110,7 +110,6 @@ def fremtidige_reiser(brukerID:str):
 		
     ''',{'brukerID': brukerID, 'current_date': current_date, 'current_clock_time': current_clock_time})
     allTickets = res.fetchall()
-    print(allTickets)
 
     output_string = ""
 

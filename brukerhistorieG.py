@@ -1,11 +1,10 @@
 import brukerhistorieD
 import hjelpefunksjoner
-from datetime import datetime, timedelta
 import sqlite3
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
-def finn_ledige_seter():
+def finnLedigeSeterOgKjop():
     """
     Hovedfunksjon for programmet. Lar brukeren se alle ledige billetter på en dato og så kjøpe dem
     """
@@ -18,7 +17,6 @@ def finn_ledige_seter():
     sluttstasjon = stasjoner[1]
     dato = hjelpefunksjoner.datoInput()
     togruter = brukerhistorieD.finnTogruterPåDato([startstasjon, sluttstasjon], dato, '00:00')
-    togruterID = [togrute[0] for togrute in togruter]
 
     #FINN ALLE LEDIGE SETER PÅ DELETOGRUTENE (delstrekningene mellom start og sluttstasjon)
     count = 1
@@ -189,10 +187,12 @@ def velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledig
 
     Parameters:
         ordreID (int): ID-en til ordren som skal opprettes
-        togrutenr (int): ID-en til togruten som skal kjøpes billett til
+        TogruteID (int): ID-en til togruten som skal opprettes
         dato (str): Datoen brukeren skal reise
         startstasjon (str): Navnet på startstasjonen
         sluttstasjon (str): Navnet på sluttstasjonen
+        ledigeSeterForSitte (dict): Dictionary med alle ledige seter for sittebilletter
+        valgtTogruteNr (int): Togrute nummeret brukeren valgte
     Returns:
     """
     valgtVognNr = input("Velg vogn nummer: ")
@@ -250,11 +250,12 @@ def velgKupeebillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledig
 
     Parameters: 
         ordreID (int): ID-en til ordren som skal opprettes
-        togrutenr (int): Togrute nummeret som brukeren har valgt
-        kupeeDict (dict): En dictionary som kan oversette nummeret til vognen (relativt til toget) til vognID-en
-        gyldigeKupeeNr (dict): En dictionary som inneholder hvilke kupéer som er ledige i hver vogn
+        togruteID (int): ID-en til togruten som skal kjøpes billett til
+        dato (str): Datoen brukeren skal reise
         startstasjon (str): Navnet på stasjonen som toget starter på
         sluttstasjon (str): Navnet på stasjonen som toget ender på
+        ledigeSeterForSove (dict): En dictionary med alle ledige kupeer for sovevogner
+        valgtTogruteNr (int): Togrute nummeret brukeren valgte
     Returns:
     """
     valgtVognNr = input("Velg vogn nummer: ")
@@ -289,6 +290,6 @@ def velgKupeebillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledig
         print("Din ordre er bestilt!")
 
 if __name__ == "__main__":
-    finn_ledige_seter()
+    finnLedigeSeterOgKjop()
 
 con.commit()

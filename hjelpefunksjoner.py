@@ -44,7 +44,7 @@ def startOgSluttStasjonsInput():
 
 # Henter inn bruker input for klokkeslett, og validerer input'en
 def klokkeslettInput():
-    klokkeslett = input("Klokkeslett (for.eks 16:45): ")
+    klokkeslett = input("Klokkeslett for avgang (for.eks 16:45): ")
     if re.match(r'^([0-1][0-9]|[2][0-3]):([0-5][0-9])$', klokkeslett) and datetime.strptime(klokkeslett, "%H:%M"):
         return klokkeslett
     print("Ikke gyldig klokkeslett, prøv igjen")

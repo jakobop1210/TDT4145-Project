@@ -114,9 +114,11 @@ def finnLedigeSeterOgKjop():
     ''', {'Dato': dato, 'Tid': dato, 'KundeNr': kundeNr, 'TogruteID': valgtTogrute[0]}).fetchall()
     ordreID = cursor.lastrowid
 
+    valgteSeter = dict()
     if (typeBillett == "1"):
         while True:
-            velgSitteBillett(ordreID, valgtTogrute[0], valgtTogrute[-1], startstasjon, sluttstasjon, ledigeSeterForSitte, valgtTogruteNr)
+            valgtSeteNr, valgtVognNr = velgSitteBillett(ordreID, valgtTogrute[0], valgtTogrute[-1], startstasjon, sluttstasjon, ledigeSeterForSitte, valgtTogruteNr, valgteSeter)
+            valgteSeter[valgtVognNr] = valgteSeter[valgtTogruteNr] + [valgtSeteNr] if valgtTogruteNr in valgteSeter else [valgtSeteNr]
             if (input(f"Vil du kjøpe flere sittebilletter for togrute {valgtTogrute[0]}? (j/n): ").lower() == "n"):
                 break
     elif (typeBillett == "2"):
@@ -181,7 +183,7 @@ def velgTogruteNr(togruter, ledigeSeterForSitte, ledigeSeterForSove, typeBillett
                 return velgTogruteNr(togruter, ledigeSeterForSitte, ledigeSeterForSove, typeBillett)
         return togruter[int(togruteNr)-1], togruteNr
 
-def velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledigeSeterForSitte, valgtTogruteNr):
+def velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledigeSeterForSitte, valgtTogruteNr, valgteSeter):
     """
     Finner hvilken vogn og sete som brukeren vil kjøpe og lager en bestilling basert på dette
 
@@ -193,6 +195,7 @@ def velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledig
         sluttstasjon (str): Navnet på sluttstasjonen
         ledigeSeterForSitte (dict): Dictionary med alle ledige seter for sittebilletter
         valgtTogruteNr (int): Togrute nummeret brukeren valgte
+        valgteSeter (dict): Dictionary med alle seter som er valgt av brukeren tidligere
     Returns:
     """
     valgtVognNr = input("Velg vogn nummer: ")
@@ -202,14 +205,18 @@ def velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledig
     
     if vognKey not in ledigeSeterForSitte: #sjekker om oppgitt vogn er tilgjengelig
         print("Velg et gyldig vogn nummer!")
-        return velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledigeSeterForSitte, valgtVognNr)
+        return velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledigeSeterForSitte, valgtVognNr, valgteSeter)
     seteNr = input("Velg sete nummer: ")
     
     if int(seteNr) not in ledigeSeterForSitte[vognKey]: #sjekker om oppgitt sete er tilgjengelig for oppgitt vogn
         print()
         print("Setenummeret var ikke gyldig! Velg er gyldig vognnummer og setenummer på nytt:")
         print(ledigeSeterForSitte[vognKey])
-        return velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledigeSeterForSitte, valgtVognNr)
+        return velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledigeSeterForSitte, valgtVognNr, valgteSeter)
+    if int(valgtVognNr) in valgteSeter.keys():
+        if int(seteNr) in valgteSeter[int(valgtVognNr)]:
+            print("Du har allerede valgt dette setet!")
+            return velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledigeSeterForSitte, valgtVognNr, valgteSeter)
     korresponderendeVognID = cursor.execute('''
         SELECT VognID
         FROM SitteVogn NATURAL JOIN Togrute
@@ -243,6 +250,7 @@ def velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledig
         ''', {'BillettID': BillettID, 'DelstrekningsID': delstrekning[0]})
 
     print("Sete bestilt!")
+    return int(seteNr), int(valgtVognNr)
 
 def velgKupeebillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledigeSeterForSove, valgtTogruteNr):
     """

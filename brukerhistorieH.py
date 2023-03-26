@@ -54,7 +54,7 @@ def main():
     '''
     print("Velkommen til Jernbanesystemet\n")
     bruker = getUser()
-    print(f"Velkommen {bruker[1]}\n\n Epost: {bruker[2]}, Telefon: {bruker[3]}, BrukerID: {bruker[0]}\n")
+    print(f"Velkommen {bruker[1]}\n")
     fremtidige_reiser(bruker[0])
     
 def fremtidige_reiser(brukerID:str):
@@ -65,7 +65,8 @@ def fremtidige_reiser(brukerID:str):
     Parameters
         brukerID (str): BrukerID til brukeren som skal finne fremtidige reiser
     '''
-    own_time_or_date = input("Vil du se fremtidige reiser basert på tidspunktet nå, eller et spesifikt tidspunkt? (nå[n]/egendefinert[e]): \n\n")
+    own_time_or_date = input("Vil du se fremtidige reiser basert på tidspunktet nå, eller et spesifikt tidspunkt? (nå[n]/egendefinert[e]): ")
+    print()
     if own_time_or_date.lower() == "e":
         current_date, current_clock_time = user_time()
     elif own_time_or_date.lower() == "n":
@@ -95,30 +96,27 @@ def fremtidige_reiser(brukerID:str):
                    AND (BillettDato > :current_date OR (BillettDato = :current_date AND StasjonerIRute.Avgangstid > :current_clock_time))
     ''', {'brukerID': brukerID, 'current_date': current_date, 'current_clock_time': current_clock_time})
     allTickets = res.fetchall()
-
+    
     output_string = ""
 
     for ticket in allTickets:
+        for i in range(70):
+            output_string += "-"
+        output_string += "\n"
         output_string += f"Traveler: {ticket[0]} Dato: {ticket[2]} Operatør: {ticket[7]} \nOrderNummer: {ticket[1]}  Fra '{ticket[4]}' Til  '{ticket[5]}' Avgangstid: '{ticket[6]}'\N{HOURGLASS}\n\n"
         seteBillettInformasjon = getSeteBillett(ticket[1], brukerID)
         if seteBillettInformasjon:
           for billett in seteBillettInformasjon:
             sete = f"BillettID: {billett[0]} Sete: {billett[1]}  Vogn nummer: {billett[2]}\n"
             output_string += sete
-            line = ""
-          for i in range(len(sete)):
-            line += "-"
-          output_string += line + "\n"
+          output_string += "\n"
             
         kupeBillettInformasjon = getKupeebillett(ticket[1], brukerID)
         if kupeBillettInformasjon:
           for billett in kupeBillettInformasjon:
             kup = f"BillettID: {billett[0]} Kupe: {billett[1]} SengeNr: {billett[2]}  Vogn nummer: {billett[3]}\n"
             output_string += kup
-            line = ""
-          for i in range(len(kup)):
-            line += "-"
-          output_string += line + "\n"
+          output_string += "\n"
             
     if not output_string:
         print("Ingen reiser funnet")

@@ -119,7 +119,7 @@ def finnLedigeSeterOgKjop():
         while True:
             valgtSeteNr, valgtVognNr = velgSitteBillett(ordreID, valgtTogrute[0], valgtTogrute[-1], startstasjon, sluttstasjon, ledigeSeterForSitte, valgtTogruteNr, valgteSeter)
             valgteSeter[valgtVognNr] = valgteSeter[valgtTogruteNr] + [valgtSeteNr] if valgtTogruteNr in valgteSeter else [valgtSeteNr]
-            if (input(f"Vil du kjøpe flere sittebilletter for togrute {valgtTogrute[0]}? (j/n): ").lower() == "n"):
+            if (input(f"Vil du kjøpe flere sittebilletter for togrute {valgtTogruteNr}? (j/n): ").lower() == "n"):
                 break
     elif (typeBillett == "2"):
         velgKupeebillett(ordreID, valgtTogrute[0], valgtTogrute[-1], startstasjon, sluttstasjon, ledigeSeterForSove, valgtTogruteNr)
@@ -279,7 +279,7 @@ def velgKupeebillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledig
     if int(kupeeNr) not in ledigeSeterForSove[vognKey]: #Sjekker om kupéenummeret er gyldig for den valgte vognen
         print("Velg et gyldig kupée nummer!")
         return velgKupeebillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledigeSeterForSove, valgtTogruteNr)
-    antallSenger = input("Hvor mange senger vil du ha? ")
+    antallSenger = input("Hvor mange senger vil du ha? (1 eller 2) ")
 
     korresponderendeVognID = cursor.execute('''
         SELECT VognID

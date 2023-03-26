@@ -43,7 +43,7 @@ def user_time():
         time (str): Tidspunktet brukeren har valgt
     '''
 
-    date = hjelpefunksjoner.datoInput().date()
+    date = hjelpefunksjoner.datoInput()
     time = str(hjelpefunksjoner.klokkeslettInput())
     print(date, time)
     return date, time
@@ -110,8 +110,6 @@ def fremtidige_reiser(brukerID:str):
             line += "-"
           output_string += line + "\n"
             
-
-            
         kupeBillettInformasjon = getKupeebillett(ticket[1], brukerID)
         if kupeBillettInformasjon:
           for billett in kupeBillettInformasjon:
@@ -174,7 +172,6 @@ def getSeteBillett(ordreNr, brukerID):
     WHERE KundeOrdre.KundeNr = :brukerID AND OrdreNr = :ordreNr
     ''',{'ordreNr': ordreNr, 'brukerID': brukerID})
     list = ticket.fetchall()
-    print(list)
 
     if not list:
         return []
@@ -204,7 +201,6 @@ def getKupeebillett(ordreNr:str, brukerID:str):
 
     if not list:
         return []
-
     return list
 main()
 

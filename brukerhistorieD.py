@@ -5,11 +5,12 @@ from datetime import datetime, timedelta
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
-# Henter ut intput for startstasjon, sluttstasjon, dato og klokkeslett ved å kalle inputfunksjonene.
-# Finner alle togruter fra startstasjon til sluttstasjon etter klokkeslett for oppgitt dato,
-# og for alle klokkeslett dagen etter. Printer ut resultatet i terminalen. 
 def finnTogruter():
-    # Spør brukeren om input for stasjonsnavn, dato og klokkeslett
+    """
+        Henter ut intput for startstasjon, sluttstasjon, dato og klokkeslett ved å kalle inputfunksjonene.
+        Finner alle togruter fra startstasjon til sluttstasjon etter klokkeslett for oppgitt dato,
+        og for alle klokkeslett dagen etter. Printer ut resultatet i terminalen. 
+    """
     print("Vennligst fyll ut ønsket startstasjon")
     stasjoner = hjelpefunksjoner.startOgSluttStasjonsInput()
     print(stasjoner[0], stasjoner[1])
@@ -18,7 +19,6 @@ def finnTogruter():
 
     rows = finnTogruterPåDato(stasjoner, dato, klokkeslett)
  
-    # Hvis spørringen er tom finnes det ingen togruter, ellers printes resultatet
     if not rows:
         print(f'''Det finnes ingen togruter som går mellom {stasjoner[0]} og {stasjoner[1]} den {dato} etter kl {klokkeslett}, eller den {dato + timedelta(days=1)}''')
     for row in rows:
@@ -26,13 +26,22 @@ def finnTogruter():
 
 
 def finnTogruterPåDato(stasjoner, dato, klokkeslett):
-    # I SECLECT-delen settes Dato til + 1 dag hvis valgt startStasjon har avgangstid som er 
-    # mindre enn avgangstiden for togruten sin startstasjon, da dette betyr at togruten går over to datoer.
-    # I WHERE-delen så sjekkes det samme som i SELECT-delen to ganger, for å se om Dato (evt oppdatert)
-    # er lik dato og avgangstid >= klokkeslett, eller bare lik datoDagEtter. 
-    # Videre sjekkes det for at startStasjon og sluttStasjon er riktig i forhold til brukerinput. 
-    # Tilsutt sjekkes det for at togruten går riktig vei, 
-    # da må startStasjon sitt StasjonNr må være mindre enn sluttStasjon sitt StasjonsNr 
+    """ 
+        I SECLECT-delen settes Dato til + 1 dag hvis valgt startStasjon har avgangstid som er 
+        mindre enn avgangstiden for togruten sin startstasjon, da dette betyr at togruten går over to datoer.
+        I WHERE-delen så sjekkes det samme som i SELECT-delen to ganger, for å se om Dato (evt oppdatert)
+        er lik dato og avgangstid >= klokkeslett, eller bare lik datoDagEtter. 
+        Videre sjekkes det for at startStasjon og sluttStasjon er riktig i forhold til brukerinput. 
+        Tilsutt sjekkes det for at togruten går riktig vei, 
+        da må startStasjon sitt StasjonNr må være mindre enn sluttStasjon sitt StasjonsNr 
+        Parameters:
+            stasjoner (array): List med valgt start- og sluttstasjon
+            dato (str): Datoen brukeren skal reise
+            klokkelsett (str): klokkeslettet som brukeren har valgt 
+        Returns:
+            type (list): List med alle togruter som går mellom valgte stasjoner på valgt dato og klokkeslett
+    """
+    
     return cursor.execute("""
         SELECT Tog.TogruteID, startStasjonIRute.Avgangstid, sluttStasjonIRute.Ankomsttid,
             CASE WHEN startStasjonIRute.Avgangstid < (

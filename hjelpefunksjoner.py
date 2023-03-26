@@ -7,8 +7,7 @@ import sqlite3
 con = sqlite3.connect('jernbane.db')
 cursor = con.cursor()
 
-alleDager = ["Mandag", "Tirsdag", "Onsdag",
-             "Torsdag", "Fredag", "Lørdag", "Søndag"]
+alleDager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
 
 
 def getUserID():

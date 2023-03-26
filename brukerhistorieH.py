@@ -76,69 +76,52 @@ def fremtidige_reiser(brukerID:str):
     
     print(f"Reiser etter {current_date} {current_clock_time}\N{HOURGLASS}\n")
 
-    res = cursor.execute(
-        '''
-        SELECT Kunde.Navn, KundeOrdre.OrdreNr, BillettDato, 
-        BillettTogruteID, StartStasjon, SluttStasjon, 
-        StasjonerIRute.Avgangstid, Togrute.OperatorNavn
-        FROM
-        	Kunde NATURAL JOIN KundeOrdre
-        	INNER JOIN (
-        		SELECT
-        			OrdreNr AS AlleOrderer,TogruteID AS BillettTogruteID,Dato AS BillettDato,StartStasjon,SluttStasjon
-        		FROM
-        			BillettSete
-        	UNION
-        	  SELECT
-        		  OrdreNr AS AlleOrderer,TogruteID AS BillettTogruteID,Dato AS BillettDato,StartStasjon,SluttStasjon
-        	  FROM
-        		  BillettKupee) 
-
-        		ON KundeOrdre.OrdreNr == AlleOrderer
-
-        		INNER JOIN TogruteForekomst on 
-              (BillettDato == TogruteForekomst.Dato and BillettTogruteID == TogruteForekomst.TogruteID)
-
-        		INNER JOIN Togrute ON 
-              TogruteForekomst.TogruteID == Togrute.TogruteID
-
-        		INNER JOIN StasjonerIRute on 
-              (StasjonerIRute.TogruteID == Togrute.TogruteID and  StasjonerIRute.JernbanestasjonNavn == StartStasjon)
-
-        		WHERE Kunde.KundeNr == :brukerID and 
-              (BillettDato > :current_date or (BillettDato == :current_date and StasjonerIRute.Avgangstid > :current_clock_time))
-		
+    res = cursor.execute('''
+        SELECT Kunde.Navn, KundeOrdre.OrdreNr, BillettDato, BillettTogruteID, 
+              StartStasjon, SluttStasjon, StasjonerIRute.Avgangstid, Togrute.OperatorNavn
+        FROM Kunde NATURAL JOIN KundeOrdre
+        	 INNER JOIN (
+        		SELECT OrdreNr AS AlleOrderer,TogruteID AS BillettTogruteID, 
+                       Dato AS BillettDato,StartStasjon,SluttStasjon
+        		FROM BillettSete
+        	    UNION
+        	    SELECT OrdreNr AS AlleOrderer,TogruteID AS BillettTogruteID, 
+                       Dato AS BillettDato,StartStasjon,SluttStasjon
+        	    FROM BillettKupee) ON KundeOrdre.OrdreNr = AlleOrderer
+        	 INNER JOIN TogruteForekomst ON (BillettDato = TogruteForekomst.Dato AND BillettTogruteID = TogruteForekomst.TogruteID)
+        	 INNER JOIN Togrute ON TogruteForekomst.TogruteID = Togrute.TogruteID
+        	 INNER JOIN StasjonerIRute ON (StasjonerIRute.TogruteID = Togrute.TogruteID AND StasjonerIRute.JernbanestasjonNavn = StartStasjon)
+             WHERE Kunde.KundeNr = :brukerID 
+                   AND (BillettDato > :current_date OR (BillettDato = :current_date AND StasjonerIRute.Avgangstid > :current_clock_time))
     ''',{'brukerID': brukerID, 'current_date': current_date, 'current_clock_time': current_clock_time})
     allTickets = res.fetchall()
 
     output_string = ""
 
     for ticket in allTickets:
-        output_string += f"Traveler: {ticket[0]} Date: {ticket[2]} Operator: {ticket[7]} \nOrderNumber: {ticket[1]}  From '{ticket[4]}' To  '{ticket[5]}'  Departure: '{ticket[6]}'\N{HOURGLASS}\n\n"
+        output_string += f"Traveler: {ticket[0]} Dato: {ticket[2]} Operatør: {ticket[7]} \nOrderNummer: {ticket[1]}  Fra '{ticket[4]}' Til  '{ticket[5]}' Avgangstid: '{ticket[6]}'\N{HOURGLASS}\n\n"
         seteBillettInformasjon = getSeteBillett(ticket[1], brukerID)
         if seteBillettInformasjon:
           for billett in seteBillettInformasjon:
-            sete = f"BillettID: {billett[6]} Sete: {billett[7]}  VognID: {billett[8]}\n\n"
+            sete = f"BillettID: {billett[0]} Sete: {billett[1]}  Vogn nummer: {billett[2]}\n"
             output_string += sete
             line = ""
-            for i in range(len(sete)):
-              line += "-"
-            output_string += line + "\n\n"
+          for i in range(len(sete)):
+            line += "-"
+          output_string += line + "\n"
             
 
             
         kupeBillettInformasjon = getKupeebillett(ticket[1], brukerID)
         if kupeBillettInformasjon:
           for billett in kupeBillettInformasjon:
-            kup = f"Seng: {billett[7]} Kupe: {billett[8]}  VognID: {billett[9]}\n\n"
+            kup = f"BillettID: {billett[0]} Kupe: {billett[1]} SengeNr: {billett[2]}  Vogn nummer: {billett[3]}\n"
             output_string += kup
             line = ""
-            for i in range(len(kup)):
-              line += "-"
-            output_string += line + "\n\n"
+          for i in range(len(kup)):
+            line += "-"
+          output_string += line + "\n"
             
-
-
     if not output_string:
         print("Ingen reiser funnet")
         return
@@ -162,7 +145,7 @@ def getUser():
         SELECT *
         from kunde
         WHERE Epost == :email
-    ''',{'email': email})
+    ''', {'email': email})
     list = userID.fetchall()
 
     if not list:
@@ -171,7 +154,7 @@ def getUser():
 
     return list[0]
 
-def getSeteBillett(ordreNr:str, brukerID:str):
+def getSeteBillett(ordreNr, brukerID):
     '''
         Henter setebilletter basert på ordrenummer til en bruker. Spør på nytt om billett ikke finnes.
 
@@ -184,15 +167,14 @@ def getSeteBillett(ordreNr:str, brukerID:str):
         return getSeteBillett()
 
     ticket = cursor.execute('''
-    SELECT*
-    FROM
-      KundeOrdre
-      NATURAL JOIN BillettSete
-      NATURAL JOIN Sete
-    WHERE
-      KundeOrdre.KundeNr == :brukerID AND OrdreNr == :ordreNr
+    SELECT BillettID, SeteNr, NrIVognOppsett
+    FROM KundeOrdre NATURAL JOIN BillettSete
+         NATURAL JOIN Sete
+         INNER JOIN SitteVogn ON BillettSete.VognID = SitteVogn.VognID
+    WHERE KundeOrdre.KundeNr = :brukerID AND OrdreNr = :ordreNr
     ''',{'ordreNr': ordreNr, 'brukerID': brukerID})
     list = ticket.fetchall()
+    print(list)
 
     if not list:
         return []
@@ -207,20 +189,16 @@ def getKupeebillett(ordreNr:str, brukerID:str):
             ticket (list): En liste med billettinformasjon
     '''
 
-
     if not ordreNr:
         print("Du kan ikke skrive inn en tom streng. Prøv igjen.")
         return getKupeebillett()
 
     ticket = cursor.execute('''
-      SELECT *
-      FROM
-        KundeOrdre
-        NATURAL JOIN BillettKupee
-        NATURAL JOIN Kupee
-      WHERE
-        KundeOrdre.KundeNr == :brukerID
-      	AND KundeOrdre.OrdreNr == :ordreNr
+      SELECT BillettID, KupeeNr, SengeNr, NrIVognOppsett
+      FROM KundeOrdre NATURAL JOIN BillettKupee
+           NATURAL JOIN Kupee
+           INNER JOIN SoveVogn ON BillettKupee.VognID = SoveVogn.VognID
+      WHERE KundeOrdre.KundeNr = :brukerID AND KundeOrdre.OrdreNr = :ordreNr
     ''',{'ordreNr': ordreNr, 'brukerID': brukerID})
     list = ticket.fetchall()
 

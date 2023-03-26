@@ -80,7 +80,7 @@ def fremtidige_reiser(brukerID:str):
         '''
         SELECT Kunde.Navn, KundeOrdre.OrdreNr, BillettDato, 
         BillettTogruteID, StartStasjon, SluttStasjon, 
-        StasjonerIRute.Avgangstid
+        StasjonerIRute.Avgangstid, Togrute.OperatorNavn
         FROM
         	Kunde NATURAL JOIN KundeOrdre
         	INNER JOIN (
@@ -110,13 +110,39 @@ def fremtidige_reiser(brukerID:str):
 		
     ''',{'brukerID': brukerID, 'current_date': current_date, 'current_clock_time': current_clock_time})
     allTickets = res.fetchall()
+    print(allTickets)
 
     output_string = ""
 
     for ticket in allTickets:
-        output_string += f"Traveler: {ticket[0]} Date: {ticket[2]}\nOrderNumber: {ticket[1]}  From '{ticket[4]}' To  '{ticket[5]}'  Departure: '{ticket[6]}'\N{HOURGLASS}\n\n"
+        output_string += f"Traveler: {ticket[0]} Date: {ticket[2]} Operator: {ticket[7]} \nOrderNumber: {ticket[1]}  From '{ticket[4]}' To  '{ticket[5]}'  Departure: '{ticket[6]}'\N{HOURGLASS}\n\n"
+        seteBillettInformasjon = getSeteBillett(ticket[1], brukerID)
+        if seteBillettInformasjon:
+          for billett in seteBillettInformasjon:
+            sete = f"BillettID: {billett[6]} Sete: {billett[7]}  VognID: {billett[8]}\n\n"
+            output_string += sete
+            line = ""
+            for i in range(len(sete)):
+              line += "-"
+            output_string += line + "\n\n"
+            
 
-    
+            
+        kupeBillettInformasjon = getKupeebillett(ticket[1], brukerID)
+        if kupeBillettInformasjon:
+          for billett in kupeBillettInformasjon:
+            kup = f"Seng: {billett[7]} Kupe: {billett[8]}  VognID: {billett[9]}\n\n"
+            output_string += kup
+            line = ""
+            for i in range(len(kup)):
+              line += "-"
+            output_string += line + "\n\n"
+            
+
+
+    if not output_string:
+        print("Ingen reiser funnet")
+        return
     print(output_string)
 	 
 
@@ -146,8 +172,63 @@ def getUser():
 
     return list[0]
 
+def getSeteBillett(ordreNr:str, brukerID:str):
+    '''
+        Henter setebilletter basert på ordrenummer til en bruker. Spør på nytt om billett ikke finnes.
+
+        Returns:
+            ticket (list): En liste med billettinformasjon
+    '''
+
+    if not ordreNr:
+        print("Du kan ikke skrive inn en tom streng. Prøv igjen.")
+        return getSeteBillett()
+
+    ticket = cursor.execute('''
+    SELECT*
+    FROM
+      KundeOrdre
+      NATURAL JOIN BillettSete
+      NATURAL JOIN Sete
+    WHERE
+      KundeOrdre.KundeNr == :brukerID AND OrdreNr == :ordreNr
+    ''',{'ordreNr': ordreNr, 'brukerID': brukerID})
+    list = ticket.fetchall()
+
+    if not list:
+        return []
+
+    return list
+
+def getKupeebillett(ordreNr:str, brukerID:str):
+    '''
+        Henter kupeebilletter basert på ordrenummer til en bruker. Spør på nytt om billett ikke finnes.
+
+        Returns:
+            ticket (list): En liste med billettinformasjon
+    '''
+
+
+    if not ordreNr:
+        print("Du kan ikke skrive inn en tom streng. Prøv igjen.")
+        return getKupeebillett()
+
+    ticket = cursor.execute('''
+      SELECT *
+      FROM
+        KundeOrdre
+        NATURAL JOIN BillettKupee
+        NATURAL JOIN Kupee
+      WHERE
+        KundeOrdre.KundeNr == :brukerID
+      	AND KundeOrdre.OrdreNr == :ordreNr
+    ''',{'ordreNr': ordreNr, 'brukerID': brukerID})
+    list = ticket.fetchall()
+
+    if not list:
+        return []
+
+    return list
 main()
-# find_time()
-# user_time()
 
 con.commit()

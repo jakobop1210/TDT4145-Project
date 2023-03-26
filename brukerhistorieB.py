@@ -61,4 +61,15 @@ cursor.execute('''INSERT INTO StasjonerIRute VALUES
     ("Steinkjer", 3, "12:26", "12:31", 3),
     ("Trondheim", 3, "14:13", NULL, 4)''')
 
+# Legge inn data i  Ukedager-tabellen. NB! Tilhører egentlig brukerhistorie C, 
+# men står her for å kunne kjøre C flere ganger uten å måtte kommentere ut denne koden
+hverdager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"]
+alleDager = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
+
+for i in hverdager:
+   cursor.execute(f'''INSERT INTO Ukedager VALUES (1, '{i}')''')
+   cursor.execute(f'''INSERT INTO Ukedager VALUES (3, '{i}')''')
+for i in alleDager:
+   cursor.execute(f'''INSERT INTO Ukedager VALUES (2, '{i}')''')
+
 con.commit()

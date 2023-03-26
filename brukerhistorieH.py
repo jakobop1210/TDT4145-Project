@@ -76,46 +76,28 @@ def fremtidige_reiser(brukerID:str):
     
     print(f"Reiser etter {current_date} {current_clock_time}\N{HOURGLASS}\n")
 
-    res = cursor.execute(
-        '''
-        SELECT Kunde.Navn, KundeOrdre.OrdreNr, BillettDato, 
-        BillettTogruteID, StartStasjon, SluttStasjon, 
-        StasjonerIRute.Avgangstid
-        FROM
-        	Kunde NATURAL JOIN KundeOrdre
-        	INNER JOIN (
-        		SELECT
-        			OrdreNr AS AlleOrderer,TogruteID AS BillettTogruteID,Dato AS BillettDato,StartStasjon,SluttStasjon
-        		FROM
-        			BillettSete
-        	UNION
-        	  SELECT
-        		  OrdreNr AS AlleOrderer,TogruteID AS BillettTogruteID,Dato AS BillettDato,StartStasjon,SluttStasjon
-        	  FROM
-        		  BillettKupee) 
-
-        		ON KundeOrdre.OrdreNr == AlleOrderer
-
-        		INNER JOIN TogruteForekomst on 
-              (BillettDato == TogruteForekomst.Dato and BillettTogruteID == TogruteForekomst.TogruteID)
-
-        		INNER JOIN Togrute ON 
-              TogruteForekomst.TogruteID == Togrute.TogruteID
-
-        		INNER JOIN StasjonerIRute on 
-              (StasjonerIRute.TogruteID == Togrute.TogruteID and  StasjonerIRute.JernbanestasjonNavn == StartStasjon)
-
-        		WHERE Kunde.KundeNr == :brukerID and 
-              (BillettDato > :current_date or (BillettDato == :current_date and StasjonerIRute.Avgangstid > :current_clock_time))
-		
+    res = cursor.execute(''' 
+        SELECT Kunde.Navn, KundeOrdre.OrdreNr, BillettDato, BillettTogruteID, StartStasjon, SluttStasjon, StasjonerIRute.Avgangstid
+        FROM Kunde NATURAL JOIN KundeOrdre
+        	 INNER JOIN (
+        		SELECT OrdreNr AS AlleOrderer,TogruteID AS BillettTogruteID,Dato AS BillettDato,StartStasjon,SluttStasjon
+        		FROM BillettSete
+        	    UNION
+                SELECT OrdreNr AS AlleOrderer,TogruteID AS BillettTogruteID,Dato AS BillettDato,StartStasjon,SluttStasjon
+        	    FROM BillettKupee
+             ) ON KundeOrdre.OrdreNr = AlleOrderer
+             INNER JOIN TogruteForekomst ON (BillettDato = TogruteForekomst.Dato AND BillettTogruteID = TogruteForekomst.TogruteID)
+             INNER JOIN Togrute ON TogruteForekomst.TogruteID = Togrute.TogruteID
+             INNER JOIN StasjonerIRute ON (StasjonerIRute.TogruteID = Togrute.TogruteID AND StasjonerIRute.JernbanestasjonNavn = StartStasjon)
+        WHERE Kunde.KundeNr = :brukerID 
+              AND (BillettDato > :current_date OR (BillettDato = :current_date AND StasjonerIRute.Avgangstid > :current_clock_time))	
     ''',{'brukerID': brukerID, 'current_date': current_date, 'current_clock_time': current_clock_time})
     allTickets = res.fetchall()
 
     output_string = ""
 
     for ticket in allTickets:
-        output_string += f"Traveler: {ticket[0]} Date: {ticket[2]}\nOrderNumber: {ticket[1]}  From '{ticket[4]}' To  '{ticket[5]}'  Departure: '{ticket[6]}'\N{HOURGLASS}\n\n"
-
+        output_string += f"Traveler: {ticket[0]} Date: {ticket[2]}\nOrderNumber: {ticket[1]}  Fra '{ticket[4]}' Til  '{ticket[5]}' Avgangstid: '{ticket[6]}'\N{HOURGLASS}\n\n"
     
     print(output_string)
 	 
@@ -137,7 +119,7 @@ def getUser():
         SELECT *
         from kunde
         WHERE Epost == :email
-    ''',{'email': email})
+    ''', {'email': email})
     list = userID.fetchall()
 
     if not list:

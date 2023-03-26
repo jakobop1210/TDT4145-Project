@@ -74,8 +74,10 @@ def finnTogruterInnomStasjon(stasjon, ukedag):
                 SELECT TogruteID
                 FROM Togrute NATURAL JOIN StasjonerIRute
                 WHERE StasjonerIRute.JernbanestasjonNavn = :stasjonsNavn
+                )
             )
-        )""", {"ukedag": ukedag, "stasjonsNavn": stasjon}).fetchall()
+        ORDER BY StartstasjonIRute.Avgangstid DESC
+        """, {"ukedag": ukedag, "stasjonsNavn": stasjon}).fetchall()
 
 
 if __name__ == "__main__":

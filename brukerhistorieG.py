@@ -119,7 +119,7 @@ def finnLedigeSeterOgKjop():
         while True:
             valgtSeteNr, valgtVognNr = velgSitteBillett(ordreID, valgtTogrute[0], valgtTogrute[-1], startstasjon, sluttstasjon, ledigeSeterForSitte, valgtTogruteNr, valgteSeter)
             valgteSeter[valgtVognNr] = valgteSeter[valgtTogruteNr] + [valgtSeteNr] if valgtTogruteNr in valgteSeter else [valgtSeteNr]
-            if (input(f"Vil du kjøpe flere sittebilletter for togrute {valgtTogrute[0]}? (j/n): ").lower() == "n"):
+            if (input(f"Vil du kjøpe flere sittebilletter for togrute {valgtTogruteNr}? (j/n): ").lower() == "n"):
                 break
     elif (typeBillett == "2"):
         velgKupeebillett(ordreID, valgtTogrute[0], valgtTogrute[-1], startstasjon, sluttstasjon, ledigeSeterForSove, valgtTogruteNr)

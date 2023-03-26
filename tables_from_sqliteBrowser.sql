@@ -15,7 +15,7 @@ CREATE TABLE Delstrekning (
 	Lengde INTEGER,
 	StartStasjon TEXT,
 	SluttStasjon TEXT,
-	CONSTRAINT delstrekning_pk PRIMARY KEY (DelstrekningsID AUTOINCREMENT),
+	CONSTRAINT delstrekning_pk PRIMARY KEY (DelstrekningsID),
 	CONSTRAINT start_fk FOREIGN KEY (StartStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT slutt_fk FOREIGN KEY (StartStasjon) REFERENCES JernbaneStasjon(Navn) ON UPDATE CASCADE ON DELETE CASCADE
 );

@@ -206,7 +206,9 @@ def velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledig
     seteNr = input("Velg sete nummer: ")
     
     if int(seteNr) not in ledigeSeterForSitte[vognKey]: #sjekker om oppgitt sete er tilgjengelig for oppgitt vogn
-        print("Velg et gyldig sete nummer!")
+        print()
+        print("Setenummeret var ikke gyldig! Velg er gyldig vognnummer og setenummer på nytt:")
+        print(ledigeSeterForSitte[vognKey])
         return velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledigeSeterForSitte, valgtVognNr)
     korresponderendeVognID = cursor.execute('''
         SELECT VognID

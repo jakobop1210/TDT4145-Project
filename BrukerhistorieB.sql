@@ -8,11 +8,11 @@ INSERT INTO Togrute VALUES
     (3, 0, 'SJ');
 
 -- Opprette sittevogn og seter
-INSERT INTO Sittevogn(Navn, NrIVognOppsett, AntallRader, SeterPerRad, OperatørNavn, TogruteID) VALUES 
-    ('SJ-sittevogn-1', 1, 3, 4, 'SJ', 1),
-    ('SJ-sittevogn-1', 2, 3, 4, 'SJ', 1),
-    ('SJ-sittevogn-1', 1, 3, 4, 'SJ', 2),
-    ('SJ-sittevogn-1', 1, 3, 4, 'SJ', 3);
+INSERT INTO Sittevogn VALUES 
+    (1, 'SJ-sittevogn-1', 1, 3, 4, 'SJ', 1),
+    (2, 'SJ-sittevogn-1', 2, 3, 4, 'SJ', 1),
+    (3, 'SJ-sittevogn-1', 1, 3, 4, 'SJ', 2),
+    (4, 'SJ-sittevogn-1', 1, 3, 4, 'SJ', 3);
 
 -- Legge inn sete 1 til sete 12 i hver vogn
 INSERT INTO Sete VALUES 
@@ -22,7 +22,7 @@ INSERT INTO Sete VALUES
     (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4), (8, 4), (9, 4), (10, 4), (11, 4), (12, 4);
 
 -- Opprette sovevogn og kupéer
-INSERT INTO Sovevogn(Navn, NrIVognOppsett, AntallKupeer, OperatørNavn, TogruteID) VALUES ('SJ-sovevogn-1', 2, 4, 'SJ', 2);
+INSERT INTO Sovevogn VALUES (5, 'SJ-sovevogn-1', 2, 4, 'SJ', 2);
 INSERT INTO Kupee VALUES 
     (1, 5),
     (2, 5),

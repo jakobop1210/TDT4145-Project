@@ -17,9 +17,9 @@ def find_time():
     current_time = datetime.now()
     hour = current_time.hour
     minute = current_time.minute
-    if len(str(current_time.hour))<2:
+    if len(str(current_time.hour)) < 2:
         hour = "0" + str(current_time.hour)
-    if len(str(current_time.minute))<2:
+    if len(str(current_time.minute)) < 2:
         minute = "0" + str(current_time.minute)
     
     month = current_time.month
@@ -93,7 +93,7 @@ def fremtidige_reiser(brukerID:str):
         	 INNER JOIN StasjonerIRute ON (StasjonerIRute.TogruteID = Togrute.TogruteID AND StasjonerIRute.JernbanestasjonNavn = StartStasjon)
              WHERE Kunde.KundeNr = :brukerID 
                    AND (BillettDato > :current_date OR (BillettDato = :current_date AND StasjonerIRute.Avgangstid > :current_clock_time))
-    ''',{'brukerID': brukerID, 'current_date': current_date, 'current_clock_time': current_clock_time})
+    ''', {'brukerID': brukerID, 'current_date': current_date, 'current_clock_time': current_clock_time})
     allTickets = res.fetchall()
 
     output_string = ""

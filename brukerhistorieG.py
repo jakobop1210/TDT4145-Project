@@ -224,7 +224,7 @@ def velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledig
     ''', {'TogruteID': TogruteID, 'NrIVognOppsett': valgtVognNr}).fetchone()[0]
 
     cursor.execute(''' 
-        INSERT INTO BillettSete (OrdreNr, Dato, TogruteID, SeteNr, VognID, StartStasjon, SluttStasjon) VALUES (:OrdreNr, :Dato, :TogruteID, :SeteNr, :VognID, :StartStasjon, :SluttStasjon)
+        INSERT INTO BillettSete(OrdreNr, Dato, TogruteID, SeteNr, VognID, StartStasjon, SluttStasjon) VALUES (:OrdreNr, :Dato, :TogruteID, :SeteNr, :VognID, :StartStasjon, :SluttStasjon)
     ''', {'OrdreNr': ordreID, 'Dato': dato, 'TogruteID': TogruteID, 'SeteNr': seteNr, 'VognID': korresponderendeVognID, 'StartStasjon': startstasjon, 'SluttStasjon': sluttstasjon})
     BillettID = cursor.lastrowid
 
@@ -234,12 +234,16 @@ def velgSitteBillett(ordreID, TogruteID, dato, startstasjon, sluttstasjon, ledig
         FROM Delstrekning
         WHERE DelstrekningsID >=  (
             SELECT DelstrekningsID
-            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
+            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) 
+                 INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) 
+                 INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
             WHERE tr.TogruteID = :TogruteID AND ds.StartStasjon = :startStasjon
             )
         AND DelstrekningsID <= (
             SELECT DelstrekningsID
-            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
+            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) 
+                 INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) 
+                INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
             WHERE tr.TogruteID = :TogruteID AND ds.SluttStasjon = :sluttStasjon
             )
     ''', {'TogruteID': TogruteID, 'startStasjon': startstasjon, 'sluttStasjon': sluttstasjon}).fetchall()

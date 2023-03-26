@@ -36,10 +36,10 @@ def startOgSluttStasjonsInput():
     # Kaller funksjonen på nytt hvis inputen er ugyldig
     if (startStasjon and sluttStasjon)  not in [navn[0] for navn in alleStasjonsNavn]:
         print("Ikke gyldig jernbanestasjoner, prøv igjen")
-        return stasjonsInput()
+        return startOgSluttStasjonsInput()
     elif startStasjon == sluttStasjon:
         print("Kan ikke ha samme start- og sluttstasjon, prøv igjen")
-        return stasjonsInput()
+        return startOgSluttStasjonsInput()
 
     return [startStasjon, sluttStasjon]
 
@@ -56,7 +56,7 @@ def datoInput():
     dato = input("Dato (for.eks 2023-04-20): ")
     try:
         dato = datetime.strptime(dato, "%Y-%m-%d")
-        return dato
+        return dato.date()
     except:
         print("Ikke gyldig dato, prøv igjen")
         return datoInput()

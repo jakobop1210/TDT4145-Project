@@ -13,7 +13,7 @@ def finnTogruter():
     print("Vennligst fyll ut ønsket startstasjon")
     stasjoner = hjelpefunksjoner.startOgSluttStasjonsInput()
     print(stasjoner[0], stasjoner[1])
-    dato = hjelpefunksjoner.datoInput().date()
+    dato = hjelpefunksjoner.datoInput()
     klokkeslett = hjelpefunksjoner.klokkeslettInput()
 
     rows = finnTogruterPåDato(stasjoner, dato, klokkeslett)

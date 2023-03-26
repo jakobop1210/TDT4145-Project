@@ -1,4 +1,5 @@
 import brukerhistorieD
+import hjelpefunksjoner
 from datetime import datetime, timedelta
 import sqlite3
 con = sqlite3.connect('jernbane.db')
@@ -10,37 +11,51 @@ def finn_ledige_seter():
     """
 
     kundeNr = userLogin()
-    dato = input("Velg dato (YYYY-MM-DD): ")
-
-    startstasjon = "Steinkjer"
-    sluttstasjon = "Bodø"
 
     #FINN ALLE TOGRUTEFOREKOMSTENE SOM INNEHOLDER START OG SLUTTSTASJONEN OG DATOEN
-    datoT = datetime.strptime(dato, "%Y-%m-%d").date()
-    togruter = brukerhistorieD.finnTogruterPåDato([startstasjon, sluttstasjon], datoT, '00:00')
+    stasjoner = hjelpefunksjoner.startOgSluttStasjonsInput()
+    startstasjon = stasjoner[0]
+    sluttstasjon = stasjoner[1]
+    dato = hjelpefunksjoner.datoInput()
+    togruter = brukerhistorieD.finnTogruterPåDato([startstasjon, sluttstasjon], dato, '00:00')
+    togruterID = [togrute[0] for togrute in togruter]
 
     #FINN ALLE LEDIGE SETER PÅ DELETOGRUTENE (delstrekningene mellom start og sluttstasjon)
+    count = 1
+
+    kupeeDict = {}
     for togruteforekomst in togruter:
         print()
-        print(f"Ledige seter for togrute {togruteforekomst[0]} den {togruteforekomst[-1]} fra {startstasjon} til {sluttstasjon}:") #Kanskje importe en funksjon fra en annen brukerhistorie for å finne start og sluttstasjon for togrute
-        
+        print(f"Ledige seter for togrute {count} den {togruteforekomst[-1]} kl {togruteforekomst[1]} fra {startstasjon} til {sluttstasjon}:") #Kanskje importe en funksjon fra en annen brukerhistorie for å finne start og sluttstasjon for togrute
+    
         responseSeter = cursor.execute('''
             SELECT DISTINCT tr.TogruteID, sv.NrIVognOppsett, s.SeteNr
-            FROM ((Togrute AS tr INNER JOIN SitteVogn AS sv ON (tr.TogruteID = sv.TogruteID)) INNER JOIN Sete AS s ON (sv.VognID = s.VognID)) INNER JOIN Togruteforekomst AS trf ON (tr.TogruteID = trf.TogruteID)
-            WHERE trf.Dato = :Dato AND tr.TogruteID = :TogruteID AND (SeteNr, s.VognID) NOT IN (
-                SELECT DISTINCT bs.SeteNr, bs.VognID
-                FROM BillettSete AS bs INNER JOIN DelstrekningForSete AS dfs ON (bs.BillettID = dfs.BillettID)
-                WHERE bs.TogruteID = :TogruteID AND bs.Dato = :Dato AND OrdreNr IS NOT NULL AND dfs.DelstrekningsID IN ( 
-                        SELECT ds1.DelstrekningsID
-                        FROM Delstrekning as ds1
-                        WHERE ds1.DelstrekningsID >=  (
-                            SELECT ds.DelstrekningsID
-                            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
-                            WHERE tr.TogruteID = :TogruteID AND ds.StartStasjon = :StartStasjon
-                        )
+            FROM ((Togrute AS tr INNER JOIN SitteVogn AS sv ON (tr.TogruteID = sv.TogruteID)) 
+                INNER JOIN Sete AS s ON (sv.VognID = s.VognID)) 
+                INNER JOIN Togruteforekomst AS trf ON (tr.TogruteID = trf.TogruteID)
+            WHERE trf.Dato = :Dato 
+                AND tr.TogruteID = :TogruteID 
+                AND (SeteNr, s.VognID) NOT IN (
+                    SELECT DISTINCT bs.SeteNr, bs.VognID
+                    FROM BillettSete AS bs INNER JOIN DelstrekningForSete AS dfs ON (bs.BillettID = dfs.BillettID)
+                    WHERE bs.TogruteID = :TogruteID 
+                        AND bs.Dato = :Dato 
+                        AND OrdreNr IS NOT NULL 
+                        AND dfs.DelstrekningsID IN ( 
+                            SELECT ds1.DelstrekningsID
+                            FROM Delstrekning as ds1
+                            WHERE ds1.DelstrekningsID >=  (
+                                SELECT ds.DelstrekningsID
+                                FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) 
+                                    INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) 
+                                    INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
+                                WHERE tr.TogruteID = :TogruteID AND ds.StartStasjon = :StartStasjon
+                            )
                         AND DelstrekningsID <= (
                             SELECT DelstrekningsID
-                            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
+                            FROM (((Togrute AS tr INNER JOIN StasjonerIRute AS sir ON (tr.TogruteID = sir.TogruteID)) 
+                                INNER JOIN JernbaneStasjon as js ON (sir.JernbanestasjonNavn = js.Navn)) 
+                                INNER JOIN Delstrekning AS ds ON (js.Navn = ds.StartStasjon)) 
                             WHERE tr.TogruteID = :TogruteID AND ds.SluttStasjon = :SluttStasjon
                         )
                     )
@@ -57,11 +72,8 @@ def finn_ledige_seter():
             responsStreng = f"Ledige seter i vogn {vognIdx}: {', '.join(ledige_seter_i_vogn)}" if len(ledige_seter_i_vogn) > 0 else "Ingen ledige seter"
             print(responsStreng)
 
-    #FINN ALLE LEDIGE KUPEER PÅ DELETOGRUTENE
-    kupeeDict = {}
-    for togruteforekomst in togruter:
         print()
-        print(f"Ledige kupeer for togrute {togruteforekomst[0]} den {togruteforekomst[-1]} fra {startstasjon} til {sluttstasjon}:")
+        print(f"Ledige kupeer for togrute {count} den {togruteforekomst[-1]} kl {togruteforekomst[1]} fra {startstasjon} til {sluttstasjon}:")
         responseKupeer = cursor.execute('''
             SELECT DISTINCT sv.NrIVognOppsett, k.KupeeNr, sv.VognID
             FROM ((Togrute AS tr INNER JOIN SoveVogn AS sv ON (tr.TogruteID = sv.TogruteID)) INNER JOIN Kupee AS k ON (sv.VognID = k.VognID)) INNER JOIN Togruteforekomst AS trf ON (tr.TogruteID = trf.TogruteID)
@@ -87,26 +99,29 @@ def finn_ledige_seter():
                     ledige_seter_i_vogn.append(str(kupee[1]))
         responsStreng = f"Ledige kupeer i vogn {ekteVognIdx}: {', '.join(ledige_seter_i_vogn)}" if harLedig > 0 else "Ingen ledige kupeer"
         print(responsStreng)
+        count += 1
+    #FINN ALLE LEDIGE KUPEER PÅ DELETOGRUTENE
+    #for togruteforekomst in togruter:
 
     #KJØP BILLETTER
     print()
     typeBillett = velgTypeBillett() 
 
     print("Vennligst velg hvilken billett du vil kjøpe:")
-    togrutenr = velgTogruteNr(startstasjon, sluttstasjon, typeBillett, dato) 
+    valgtTogrute = velgTogruteNr(togruter) 
 
     cursor.execute('''
         INSERT INTO KundeOrdre (Dag, tid, KundeNr, Dato, TogruteID) VALUES (:Dato, :Tid, :KundeNr, :Dato, :TogruteID)
-    ''', {'Dato': dato, 'Tid': dato, 'KundeNr': kundeNr, 'TogruteID': togrutenr}).fetchall()
+    ''', {'Dato': dato, 'Tid': dato, 'KundeNr': kundeNr, 'TogruteID': valgtTogrute[0]}).fetchall()
     ordreID = cursor.lastrowid
 
     if (typeBillett == "1"):
         while True:
-            velgSitteBillett(ordreID, togrutenr, dato, startstasjon, sluttstasjon)
-            if (input(f"Vil du kjøpe flere sittebilletter for togrute {togrutenr}? (j/n): ").lower() == "n"):
+            velgSitteBillett(ordreID, valgtTogrute[0], valgtTogrute[-1], startstasjon, sluttstasjon)
+            if (input(f"Vil du kjøpe flere sittebilletter for togrute {valgtTogrute[0]}? (j/n): ").lower() == "n"):
                 break
     elif (typeBillett == "2"):
-        velgKupeebillett(ordreID, togrutenr, dato, kupeeDict, startstasjon, sluttstasjon)
+        velgKupeebillett(ordreID, valgtTogrute[0], valgtTogrute[-1], kupeeDict, startstasjon, sluttstasjon)
     else:
         print("Du valgte ikke en gyldig type billett!")
 
@@ -140,43 +155,23 @@ def velgTypeBillett():
         print("Du valgte ikke en gyldig type billett!")
         return velgTypeBillett()
 
-def velgTogruteNr(startstasjon, sluttstasjon, typeBillett, dato):
+def velgTogruteNr(togruter):
     """
     Validerer at brukeren velger et gyldig togrute nummer
 
     Parameters:
-        startstasjon (str): Stasjonen brukeren skal reise fra
-        sluttstasjon (str): Stasjonen brukeren skal reise til
-        typeBillett (int): Type billett brukeren valgte
-        dato (str): Datoen brukeren skal reise
+       gyldIDArr (Array): Liste med alle togruteID'er som kan velges
     Returns:
         togruteNr (int): Togrute nummeret brukeren valgte
     """
 
     togruteNr = input("Velg et togrute nummer: ")
-    #Finner alle togruter som går mellom startstasjon og sluttstasjon
-    gydligeTogruteNr = cursor.execute('''
-        SELECT tr.TogruteID
-        FROM Togrute AS tr NATURAL JOIN TogruteForekomst AS trf
-        WHERE tr.TogruteID IN (
-            SELECT sir.TogruteID
-            FROM StasjonerIRute AS sir
-            WHERE sir.JernbanestasjonNavn = :StartStasjon
-        )
-        AND tr.TogruteID IN (
-            SELECT sir.TogruteID
-            FROM StasjonerIRute AS sir
-            WHERE sir.JernbanestasjonNavn = :SluttStasjon
-        )
-        AND trf.Dato = :Dato
-    ''', {'Dato': dato, 'StartStasjon': startstasjon, 'SluttStasjon': sluttstasjon}).fetchall()
-    gydligTogruteNr = [x[0] for x in gydligeTogruteNr]
-
-    if int(togruteNr) in gydligTogruteNr:
-        return togruteNr
-    else:
+   
+    if int(togruteNr) < 1 or int(togruteNr) > len(togruter):
         print("Velg et gyldig togrute nummer!")
-        return velgTogruteNr(startstasjon, sluttstasjon, typeBillett, dato)
+        return velgTogruteNr(togruter)
+    else:
+        return togruter[int(togruteNr)-1]
 
 def velgSitteBillett(ordreID, togrutenr, dato, startstasjon, sluttstasjon):
     """
@@ -203,9 +198,11 @@ def velgSitteBillett(ordreID, togrutenr, dato, startstasjon, sluttstasjon):
         )
     ''', {'Dato': dato, 'TogruteID': togrutenr, 'NrIVognOppsett': vognNr}).fetchall()
     gyldigeSeteNr = [x[0] for x in gyldigeSeteNr]
+    print("HER")
+    print(gyldigeSeteNr)
 
     gyldigeVognNr = cursor.execute('''
-        SELECT DISTINCT sv.VognID
+        SELECT DISTINCT sv.NrIVognOppsett
         FROM ((Togrute AS tr INNER JOIN SitteVogn AS sv ON (tr.TogruteID = sv.TogruteID)) INNER JOIN Sete AS s ON (sv.VognID = s.VognID)) INNER JOIN Togruteforekomst AS trf ON (tr.TogruteID = trf.TogruteID)
         WHERE tr.TogruteID = :TogruteID AND trf.Dato = :Dato 
     ''', {'Dato': dato, 'TogruteID': togrutenr}).fetchall()
